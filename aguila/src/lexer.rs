@@ -1,0 +1,271 @@
+use crate::ast::Token;
+
+pub struct Lexer {
+    entrada: Vec<char>,
+    posicion: usize,
+    linea: usize,
+    columna: usize,
+}
+
+impl Lexer {
+    pub fn nuevo(entrada: &str) -> Self {
+        Lexer {
+            entrada: entrada.chars().collect(),
+            posicion: 0,
+            linea: 1,
+            columna: 1,
+        }
+    }
+
+    fn car_actual(&self) -> Option<char> {
+        if self.posicion < self.entrada.len() {
+            Some(self.entrada[self.posicion])
+        } else {
+            None
+        }
+    }
+
+    fn car_siguiente(&self) -> Option<char> {
+        if self.posicion + 1 < self.entrada.len() {
+            Some(self.entrada[self.posicion + 1])
+        } else {
+            None
+        }
+    }
+
+    fn avanzar(&mut self) -> Option<char> {
+        if let Some(car) = self.car_actual() {
+            self.posicion += 1;
+            if car == '\n' {
+                self.linea += 1;
+                self.columna = 1;
+            } else {
+                self.columna += 1;
+            }
+            Some(car)
+        } else {
+            None
+        }
+    }
+
+    fn omitir_espacios(&mut self) {
+        while let Some(car) = self.car_actual() {
+            if car.is_whitespace() {
+                self.avanzar();
+            } else {
+                break;
+            }
+        }
+    }
+
+    fn omitir_comentario(&mut self) {
+        if self.car_actual() == Some('#') {
+            while let Some(car) = self.car_actual() {
+                if car == '\n' {
+                    break;
+                }
+                self.avanzar();
+            }
+        }
+    }
+
+    fn leer_numero(&mut self) -> Token {
+        let mut numero = String::new();
+        while let Some(car) = self.car_actual() {
+            if car.is_numeric() || car == '.' {
+                numero.push(car);
+                self.avanzar();
+            } else {
+                break;
+            }
+        }
+        Token::Numero(numero.parse().unwrap_or(0.0))
+    }
+
+    fn leer_texto(&mut self, delimitador: char) -> Token {
+        self.avanzar(); // omitir comilla
+        let mut texto = String::new();
+        while let Some(car) = self.car_actual() {
+            if car == delimitador {
+                self.avanzar();
+                break;
+            }
+            if car == '\\' {
+                self.avanzar();
+                if let Some(siguiente) = self.car_actual() {
+                    match siguiente {
+                        'n' => texto.push('\n'),
+                        't' => texto.push('\t'),
+                        'r' => texto.push('\r'),
+                        '\\' => texto.push('\\'),
+                        '"' => texto.push('"'),
+                        _ => {
+                            texto.push('\\');
+                            texto.push(siguiente);
+                        }
+                    }
+                    self.avanzar();
+                }
+            } else {
+                texto.push(car);
+                self.avanzar();
+            }
+        }
+        Token::Texto(texto)
+    }
+
+    fn leer_identificador(&mut self) -> Token {
+        let mut ident = String::new();
+        while let Some(car) = self.car_actual() {
+            if car.is_alphanumeric() || car == '_' {
+                ident.push(car);
+                self.avanzar();
+            } else {
+                break;
+            }
+        }
+
+        match ident.as_str() {
+            "funcion" => Token::Funcion,
+            "si" => Token::Si,
+            "sino" => Token::Sino,
+            "mientras" => Token::Mientras,
+            "para" => Token::Para,
+            "en" => Token::En,
+            "hasta" => Token::Hasta,
+            "clase" => Token::Clase,
+            "imprimir" => Token::Imprimir,
+            "verdadero" => Token::Verdadero,
+            "falso" => Token::Falso,
+            "nulo" => Token::Nulo,
+            _ => Token::Identificador(ident),
+        }
+    }
+
+    pub fn siguiente_token(&mut self) -> Token {
+        loop {
+            self.omitir_espacios();
+
+            if self.car_actual() == Some('#') {
+                self.omitir_comentario();
+                continue;
+            }
+            break;
+        }
+
+        match self.car_actual() {
+            None => Token::EOF,
+            Some('+') => {
+                self.avanzar();
+                Token::Mas
+            }
+            Some('-') => {
+                self.avanzar();
+                Token::Menos
+            }
+            Some('*') => {
+                self.avanzar();
+                Token::Por
+            }
+            Some('/') => {
+                self.avanzar();
+                Token::Div
+            }
+            Some('(') => {
+                self.avanzar();
+                Token::ParAbre
+            }
+            Some(')') => {
+                self.avanzar();
+                Token::ParCierra
+            }
+            Some('{') => {
+                self.avanzar();
+                Token::LlaveAbre
+            }
+            Some('}') => {
+                self.avanzar();
+                Token::LlaveCierra
+            }
+            Some('[') => {
+                self.avanzar();
+                Token::CorcheteAbre
+            }
+            Some(']') => {
+                self.avanzar();
+                Token::CorcheteCierra
+            }
+            Some(',') => {
+                self.avanzar();
+                Token::Coma
+            }
+            Some('.') => {
+                self.avanzar();
+                Token::Punto
+            }
+            Some(':') => {
+                self.avanzar();
+                Token::DosPuntos
+            }
+            Some('=') => {
+                self.avanzar();
+                if self.car_actual() == Some('=') {
+                    self.avanzar();
+                    Token::Igual
+                } else {
+                    Token::Asignacion
+                }
+            }
+            Some('>') => {
+                self.avanzar();
+                if self.car_actual() == Some('=') {
+                    self.avanzar();
+                    Token::MayorIgual
+                } else {
+                    Token::Mayor
+                }
+            }
+            Some('<') => {
+                self.avanzar();
+                if self.car_actual() == Some('=') {
+                    self.avanzar();
+                    Token::MenorIgual
+                } else {
+                    Token::Menor
+                }
+            }
+            Some('!') => {
+                self.avanzar();
+                if self.car_actual() == Some('=') {
+                    self.avanzar();
+                    Token::NoIgual
+                } else {
+                    panic!("Error léxico en línea {}: '!' inesperado", self.linea);
+                }
+            }
+            Some('"') => self.leer_texto('"'),
+            Some('\'') => self.leer_texto('\''),
+            Some(car) if car.is_numeric() => self.leer_numero(),
+            Some(car) if car.is_alphabetic() || car == '_' => self.leer_identificador(),
+            Some(car) => {
+                panic!(
+                    "Error léxico en línea {}, columna {}: carácter '{}' inesperado",
+                    self.linea, self.columna, car
+                );
+            }
+        }
+    }
+
+    pub fn tokenizar(&mut self) -> Vec<Token> {
+        let mut tokens = Vec::new();
+        loop {
+            let token = self.siguiente_token();
+            if token == Token::EOF {
+                tokens.push(token);
+                break;
+            }
+            tokens.push(token);
+        }
+        tokens
+    }
+}

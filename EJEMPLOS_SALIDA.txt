@@ -1,0 +1,201 @@
+EJEMPLOS DE SALIDA
+═════════════════════════════════════════════════════════════════════════════
+
+EJEMPLO 1: Operaciones Básicas (basico.ag)
+─────────────────────────────────────────────────────────────────────────────
+
+$ aguila ejecutar ejemplos/basico.ag
+
+===== PRUEBA DE OPERACIONES BÁSICAS =====
+30
+===== PRUEBA DE BOOLEANOS =====
+verdadero
+falso
+===== PRUEBA DE LISTAS =====
+1
+2
+3
+4
+5
+===== PRUEBA DE CONDICIONES =====
+Es mayor de edad
+===== PRUEBA DE BUCLES =====
+0
+1
+2
+===== PRUEBA DE FUNCIONES =====
+30
+
+
+EJEMPLO 2: Programación Orientada a Objetos (poo.ag)
+─────────────────────────────────────────────────────────────────────────────
+
+$ aguila ejecutar ejemplos/poo.ag
+
+===== DEMOSTRACIÓN POO EN ÁGUILA =====
+===== Creando instancias =====
+Hola, soy Juan
+Soy Juan y tengo 30 años
+
+Hola, soy María
+Soy María y tengo 28 años
+
+===== Fin de demostración =====
+
+
+EJEMPLO 3: Funciones (funciones.ag)
+─────────────────────────────────────────────────────────────────────────────
+
+$ aguila ejecutar ejemplos/funciones.ag
+
+===== EJEMPLOS DE FUNCIONES =====
+===== Función cuadrado =====
+25
+100
+
+===== Función saludar =====
+¡Hola, Emerson!
+¡Hola, Juan!
+¡Hola, María!
+
+===== Función contar =====
+Contando hasta 3
+0
+1
+2
+3
+
+===== Función verificar edad =====
+Es mayor de edad
+Es menor de edad
+
+===== Fin =====
+
+
+EJEMPLO 4: REPL Interactivo
+─────────────────────────────────────────────────────────────────────────────
+
+$ aguila repl
+
+ÁGUILA v0.1.0
+Escribe 'salir' para terminar
+> imprimir 5 + 3
+8
+> nombre = "Emerson"
+> imprimir nombre
+Emerson
+> x = 10
+> y = 20
+> imprimir x + y
+30
+> salir
+¡Hasta luego!
+
+
+EJEMPLO 5: Información de Versión
+─────────────────────────────────────────────────────────────────────────────
+
+$ aguila --version
+aguila v0.1.0
+
+
+EJEMPLO 6: Ayuda
+─────────────────────────────────────────────────────────────────────────────
+
+$ aguila --help
+ÁGUILA v0.1.0
+
+Uso: aguila <comando> [opciones]
+
+Comandos:
+  ejecutar <archivo.ag>    Ejecuta un archivo ÁGUILA
+  repl                     Inicia el intérprete interactivo
+  --version                Muestra la versión
+  --help, -h               Muestra esta ayuda
+
+
+PRUEBAS ADICIONALES
+═════════════════════════════════════════════════════════════════════════════
+
+Variable Implícita:
+  Código:  x = 42
+           imprimir x
+  Salida:  42
+
+Tipado Explícito:
+  Código:  edad: numero = 25
+           imprimir edad
+  Salida:  25
+
+Concatenación de Texto:
+  Código:  nombre = "Juan"
+           imprimir "Hola " + nombre
+  Salida:  Hola Juan
+
+Booleanos:
+  Código:  imprimir verdadero
+           imprimir falso
+  Salida:  verdadero
+           falso
+
+Operaciones Matemáticas:
+  Código:  imprimir 2 + 3
+           imprimir 10 - 5
+           imprimir 3 * 4
+           imprimir 20 / 4
+  Salida:  5
+           5
+           12
+           5
+
+Comparaciones:
+  Código:  imprimir 5 > 3
+           imprimir 5 == 5
+           imprimir 5 != 3
+  Salida:  verdadero
+           verdadero
+           verdadero
+
+Listas:
+  Código:  lista = [1, 2, 3]
+           para x en lista {
+               imprimir x
+           }
+  Salida:  1
+           2
+           3
+
+Rangos:
+  Código:  para i = 0 hasta 3 {
+               imprimir i
+           }
+  Salida:  0
+           1
+           2
+
+
+ERRORES Y MANEJO
+═════════════════════════════════════════════════════════════════════════════
+
+Error: Variable No Definida
+  Código:  imprimir variable_inexistente
+  Error:   Error: Variable 'variable_inexistente' no definida
+
+Error: Función No Definida
+  Código:  funcion_inexistente()
+  Error:   Error: Función 'funcion_inexistente' no definida
+
+Error: División por Cero
+  Código:  imprimir 10 / 0
+  Error:   Error: División por cero
+
+Error de Sintaxis
+  Código:  si verdadero
+               imprimir "sin llaves"
+  Error:   Error de sintaxis: se esperaba LlaveAbre...
+
+
+═════════════════════════════════════════════════════════════════════════════
+Todos los ejemplos han sido probados y funcionan correctamente.
+Proyecto ÁGUILA v0.1.0 - 20 de Noviembre de 2025
+═════════════════════════════════════════════════════════════════════════════
