@@ -58,14 +58,12 @@ impl Lexer {
         }
     }
 
-    fn omitir_comentario(&mut self) {
-        if self.car_actual() == Some('#') {
-            while let Some(car) = self.car_actual() {
-                if car == '\n' {
-                    break;
-                }
-                self.avanzar();
+    fn omitir_resto_linea(&mut self) {
+        while let Some(car) = self.car_actual() {
+            if car == '\n' {
+                break;
             }
+            self.avanzar();
         }
     }
 
@@ -114,7 +112,42 @@ impl Lexer {
         Token::Texto(texto)
     }
 
-    fn leer_identificador(&mut self) -> Token {
+    // Nueva función para leer texto interpolado
+    fn leer_texto_interpolado(&mut self, delimitador: char) -> String {
+        // Asumimos que 'a' y el delimitador inicial ya fueron consumidos
+        let mut texto = String::new();
+        while let Some(car) = self.car_actual() {
+            if car == delimitador {
+                self.avanzar();
+                break;
+            }
+            // Aquí se añadiría la lógica para manejar las interpolaciones,
+            // por ejemplo, ${expresion}. Por ahora, se comporta como leer_texto.
+            if car == '\\' {
+                self.avanzar();
+                if let Some(siguiente) = self.car_actual() {
+                    match siguiente {
+                        'n' => texto.push('\n'),
+                        't' => texto.push('\t'),
+                        'r' => texto.push('\r'),
+                        '\\' => texto.push('\\'),
+                        '"' => texto.push('"'),
+                        _ => {
+                            texto.push('\\');
+                            texto.push(siguiente);
+                        }
+                    }
+                    self.avanzar();
+                }
+            } else {
+                texto.push(car);
+                self.avanzar();
+            }
+        }
+        texto
+    }
+
+    fn leer_identificador(&mut self) -> String {
         let mut ident = String::new();
         while let Some(car) = self.car_actual() {
             if car.is_alphanumeric() || car == '_' {
@@ -124,22 +157,7 @@ impl Lexer {
                 break;
             }
         }
-
-        match ident.as_str() {
-            "funcion" => Token::Funcion,
-            "si" => Token::Si,
-            "sino" => Token::Sino,
-            "mientras" => Token::Mientras,
-            "para" => Token::Para,
-            "en" => Token::En,
-            "hasta" => Token::Hasta,
-            "clase" => Token::Clase,
-            "imprimir" => Token::Imprimir,
-            "verdadero" => Token::Verdadero,
-            "falso" => Token::Falso,
-            "nulo" => Token::Nulo,
-            _ => Token::Identificador(ident),
-        }
+        ident
     }
 
     pub fn siguiente_token(&mut self) -> Token {
@@ -147,9 +165,16 @@ impl Lexer {
             self.omitir_espacios();
 
             if self.car_actual() == Some('#') {
-                self.omitir_comentario();
+                self.omitir_resto_linea();
                 continue;
             }
+            
+            // Verificación anticipada de // para comentarios
+            if self.car_actual() == Some('/') && self.car_siguiente() == Some('/') {
+                self.omitir_resto_linea();
+                continue;
+            }
+
             break;
         }
 
@@ -161,7 +186,12 @@ impl Lexer {
             }
             Some('-') => {
                 self.avanzar();
-                Token::Menos
+                if self.car_actual() == Some('>') {
+                    self.avanzar();
+                    Token::Flecha
+                } else {
+                    Token::Menos
+                }
             }
             Some('*') => {
                 self.avanzar();
@@ -246,7 +276,37 @@ impl Lexer {
             Some('"') => self.leer_texto('"'),
             Some('\'') => self.leer_texto('\''),
             Some(car) if car.is_numeric() => self.leer_numero(),
-            Some(car) if car.is_alphabetic() || car == '_' => self.leer_identificador(),
+            Some(car) if car.is_alphabetic() || car == '_' => {
+                let ident = self.leer_identificador();
+                if ident == "a" && self.car_actual() == Some('"') {
+                    self.avanzar(); // Consumir "
+                    let texto = self.leer_texto_interpolado('"');
+                    Token::TextoInterpolado(texto)
+                } else {
+                    match ident.as_str() {
+                        "funcion" => Token::Funcion,
+                        "si" => Token::Si,
+                        "sino" => Token::Sino,
+                        "mientras" => Token::Mientras,
+                        "para" => Token::Para,
+                        "en" => Token::En,
+                        "hasta" => Token::Hasta,
+                        "clase" => Token::Clase,
+                        "imprimir" => Token::Imprimir,
+                        "verdadero" => Token::Verdadero,
+                        "falso" => Token::Falso,
+                        "nulo" => Token::Nulo,
+                        "importar" => Token::Importar,
+                        "retornar" => Token::Retornar,
+                        "intentar" => Token::Intentar,
+                        "capturar" => Token::Capturar,
+                        "nuevo" => Token::Nuevo,
+                        "asincrono" => Token::Asincrono,
+                        "esperar" => Token::Esperar,
+                        _ => Token::Identificador(ident),
+                    }
+                }
+            }
             Some(car) => {
                 panic!(
                     "Error léxico en línea {}, columna {}: carácter '{}' inesperado",

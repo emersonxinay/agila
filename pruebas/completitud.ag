@@ -1,0 +1,31 @@
+
+
+imprimir("--- Pruebas de MATE ---")
+imprimir("PI: " + mate.pi)
+imprimir("Sin(0): " + mate.sin(0))
+imprimir("Cos(0): " + mate.cos(0))
+imprimir("Raiz(16): " + mate.raiz(16))
+imprimir("Potencia(2, 3): " + mate.potencia(2, 3))
+imprimir("Aleatorio: " + mate.aleatorio())
+
+imprimir("\n--- Pruebas de FECHA ---")
+t = fecha.ahora()
+imprimir("Timestamp: " + t)
+imprimir("Fecha: " + fecha.formato(t, "%Y-%m-%d %H:%M:%S"))
+
+imprimir("\n--- Pruebas de ASYNC/AWAIT ---")
+
+asincrono funcion tarea() {
+    imprimir("Iniciando tarea...")
+    esperar 1 // Simulación de espera (en intérprete es inmediato)
+    imprimir("Tarea completada")
+    retornar "Hecho"
+}
+
+res = esperar tarea()
+imprimir("Resultado: " + res)
+
+f = asincrono funcion() {
+    retornar "Anonima Async"
+}
+imprimir(esperar f())

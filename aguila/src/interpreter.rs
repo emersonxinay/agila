@@ -1,13 +1,20 @@
 use std::collections::HashMap;
 use std::rc::Rc;
 use std::cell::RefCell;
+use std::fs;
+use std::io::{Read, Write};
+use std::net::{TcpListener, TcpStream};
+use std::path::Path;
+use crate::lexer::Lexer;
+use crate::parser::Parser;
 use crate::ast::{Sentencia, Expresion, Programa};
-use crate::types::Value;
+use crate::types::{NativeFn, Value};
 
 pub struct Interprete {
     variables: Vec<Rc<RefCell<HashMap<String, Value>>>>,
-    funciones: HashMap<String, (Vec<(String, Option<String>)>, Vec<Sentencia>)>,
+    funciones: HashMap<String, (Vec<(String, Option<String>)>, Option<String>, Vec<Sentencia>, bool)>,
     clases: HashMap<String, (Option<String>, Vec<(String, Option<String>)>, Vec<(String, Vec<(String, Option<String>)>, Vec<Sentencia>)>)>,
+    retorno_actual: Option<Value>,
 }
 
 impl Interprete {
@@ -16,21 +23,343 @@ impl Interprete {
             variables: vec![Rc::new(RefCell::new(HashMap::new()))],
             funciones: HashMap::new(),
             clases: HashMap::new(),
+            retorno_actual: None,
         };
         interprete.registrar_funciones_nativas();
+        interprete.registrar_modulo_db();
         interprete
     }
 
-    fn registrar_funciones_nativas(&mut self) {}
+    fn registrar_funciones_nativas(&mut self) {
+        let mut fs_metodos = HashMap::new();
 
-    pub fn ejecutar(&mut self, programa: Programa) -> Result<(), String> {
-        for sentencia in programa.sentencias {
-            self.ejecutar_sentencia(&sentencia)?;
+        // fs.leer(ruta)
+        fs_metodos.insert("leer".to_string(), Value::FuncionNativa(NativeFn(Rc::new(|args| {
+            if args.len() != 1 {
+                return Err("fs.leer espera 1 argumento (ruta)".to_string());
+            }
+            if let Value::Texto(ruta) = &args[0] {
+                match std::fs::read_to_string(ruta) {
+                    Ok(contenido) => Ok(Value::Texto(contenido)),
+                    Err(e) => Err(format!("Error al leer archivo: {}", e)),
+                }
+            } else {
+                Err("El argumento de fs.leer debe ser texto".to_string())
+            }
+        }))));
+
+        // fs.escribir(ruta, contenido)
+        fs_metodos.insert("escribir".to_string(), Value::FuncionNativa(NativeFn(Rc::new(|args| {
+            if args.len() != 2 {
+                return Err("fs.escribir espera 2 argumentos (ruta, contenido)".to_string());
+            }
+            let ruta = if let Value::Texto(s) = &args[0] { s } else { return Err("Arg 1 debe ser texto".to_string()) };
+            let contenido = match &args[1] {
+                Value::Texto(s) => s.clone(),
+                Value::Numero(n) => n.to_string(),
+                _ => args[1].a_texto(),
+            };
+
+            match std::fs::write(ruta, contenido) {
+                Ok(_) => Ok(Value::Logico(true)),
+                Err(e) => Err(format!("Error al escribir archivo: {}", e)),
+            }
+        }))));
+
+        let fs_modulo = Value::Diccionario(Rc::new(RefCell::new(fs_metodos)));
+        
+        if let Some(scope) = self.variables.first_mut() {
+            scope.borrow_mut().insert("fs".to_string(), fs_modulo);
         }
-        Ok(())
+
+        // --- Módulo JSON ---
+        let mut json_metodos = HashMap::new();
+
+        // json.parsear(texto)
+        json_metodos.insert("parsear".to_string(), Value::FuncionNativa(NativeFn(Rc::new(|args| {
+            if args.len() != 1 {
+                return Err("json.parsear espera 1 argumento (texto)".to_string());
+            }
+            if let Value::Texto(json_str) = &args[0] {
+                match serde_json::from_str::<serde_json::Value>(json_str) {
+                    Ok(v) => Ok(json_to_value(&v)),
+                    Err(e) => Err(format!("Error al parsear JSON: {}", e)),
+                }
+            } else {
+                Err("El argumento de json.parsear debe ser texto".to_string())
+            }
+        }))));
+
+        // json.stringificar(valor)
+        json_metodos.insert("stringificar".to_string(), Value::FuncionNativa(NativeFn(Rc::new(|args| {
+            if args.len() != 1 {
+                return Err("json.stringificar espera 1 argumento (valor)".to_string());
+            }
+            let v = value_to_json(&args[0]);
+            match serde_json::to_string_pretty(&v) {
+                Ok(s) => Ok(Value::Texto(s)),
+                Err(e) => Err(format!("Error al stringificar JSON: {}", e)),
+            }
+        }))));
+
+        let json_modulo = Value::Diccionario(Rc::new(RefCell::new(json_metodos)));
+
+        if let Some(scope) = self.variables.first_mut() {
+            scope.borrow_mut().insert("json".to_string(), json_modulo);
+        }
+
+        // --- Módulo MATE (Math) ---
+        let mut mate_metodos = HashMap::new();
+        
+        mate_metodos.insert("pi".to_string(), Value::Numero(std::f64::consts::PI));
+        
+        mate_metodos.insert("sin".to_string(), Value::FuncionNativa(NativeFn(Rc::new(|args| {
+            if let Some(Value::Numero(n)) = args.get(0) { Ok(Value::Numero(n.sin())) } else { Err("Arg debe ser número".to_string()) }
+        }))));
+        mate_metodos.insert("cos".to_string(), Value::FuncionNativa(NativeFn(Rc::new(|args| {
+            if let Some(Value::Numero(n)) = args.get(0) { Ok(Value::Numero(n.cos())) } else { Err("Arg debe ser número".to_string()) }
+        }))));
+        mate_metodos.insert("tan".to_string(), Value::FuncionNativa(NativeFn(Rc::new(|args| {
+            if let Some(Value::Numero(n)) = args.get(0) { Ok(Value::Numero(n.tan())) } else { Err("Arg debe ser número".to_string()) }
+        }))));
+        mate_metodos.insert("raiz".to_string(), Value::FuncionNativa(NativeFn(Rc::new(|args| {
+            if let Some(Value::Numero(n)) = args.get(0) { Ok(Value::Numero(n.sqrt())) } else { Err("Arg debe ser número".to_string()) }
+        }))));
+        mate_metodos.insert("potencia".to_string(), Value::FuncionNativa(NativeFn(Rc::new(|args| {
+            if args.len() != 2 { return Err("potencia espera 2 argumentos".to_string()); }
+            match (&args[0], &args[1]) {
+                (Value::Numero(b), Value::Numero(e)) => Ok(Value::Numero(b.powf(*e))),
+                _ => Err("Args deben ser números".to_string())
+            }
+        }))));
+        mate_metodos.insert("abs".to_string(), Value::FuncionNativa(NativeFn(Rc::new(|args| {
+            if let Some(Value::Numero(n)) = args.get(0) { Ok(Value::Numero(n.abs())) } else { Err("Arg debe ser número".to_string()) }
+        }))));
+        mate_metodos.insert("piso".to_string(), Value::FuncionNativa(NativeFn(Rc::new(|args| {
+            if let Some(Value::Numero(n)) = args.get(0) { Ok(Value::Numero(n.floor())) } else { Err("Arg debe ser número".to_string()) }
+        }))));
+        mate_metodos.insert("techo".to_string(), Value::FuncionNativa(NativeFn(Rc::new(|args| {
+            if let Some(Value::Numero(n)) = args.get(0) { Ok(Value::Numero(n.ceil())) } else { Err("Arg debe ser número".to_string()) }
+        }))));
+        mate_metodos.insert("redondear".to_string(), Value::FuncionNativa(NativeFn(Rc::new(|args| {
+            if let Some(Value::Numero(n)) = args.get(0) { Ok(Value::Numero(n.round())) } else { Err("Arg debe ser número".to_string()) }
+        }))));
+        mate_metodos.insert("aleatorio".to_string(), Value::FuncionNativa(NativeFn(Rc::new(|_| {
+            Ok(Value::Numero(rand::random()))
+        }))));
+
+        let mate_modulo = Value::Diccionario(Rc::new(RefCell::new(mate_metodos)));
+        if let Some(scope) = self.variables.first_mut() {
+            scope.borrow_mut().insert("mate".to_string(), mate_modulo);
+        }
+
+        // --- Módulo FECHA ---
+        let mut fecha_metodos = HashMap::new();
+        
+        fecha_metodos.insert("ahora".to_string(), Value::FuncionNativa(NativeFn(Rc::new(|_| {
+             let now = chrono::Utc::now();
+             Ok(Value::Numero(now.timestamp_millis() as f64))
+        }))));
+        
+        fecha_metodos.insert("formato".to_string(), Value::FuncionNativa(NativeFn(Rc::new(|args| {
+            if args.len() != 2 { return Err("formato espera 2 argumentos (timestamp, fmt)".to_string()); }
+            let ts = if let Value::Numero(n) = args[0] { n as i64 } else { return Err("Arg 1 debe ser timestamp (numero)".to_string()) };
+            let fmt = if let Value::Texto(s) = &args[1] { s } else { return Err("Arg 2 debe ser formato (texto)".to_string()) };
+            
+            if let Some(dt) = chrono::DateTime::from_timestamp_millis(ts) {
+                Ok(Value::Texto(dt.format(fmt).to_string()))
+            } else {
+                Err("Timestamp inválido".to_string())
+            }
+        }))));
+
+        let fecha_modulo = Value::Diccionario(Rc::new(RefCell::new(fecha_metodos)));
+        if let Some(scope) = self.variables.first_mut() {
+            scope.borrow_mut().insert("fecha".to_string(), fecha_modulo);
+        }
+
+        // --- Módulo RED ---
+        let mut red_metodos = HashMap::new();
+
+        // red.servidor(puerto)
+        red_metodos.insert("servidor".to_string(), Value::FuncionNativa(NativeFn(Rc::new(|args| {
+            if args.len() != 1 {
+                return Err("red.servidor espera 1 argumento (puerto)".to_string());
+            }
+            let puerto = match &args[0] {
+                Value::Numero(n) => *n as u16,
+                _ => return Err("Puerto debe ser número".to_string()),
+            };
+
+            let listener = match TcpListener::bind(format!("0.0.0.0:{}", puerto)) {
+                Ok(l) => Rc::new(l),
+                Err(e) => return Err(format!("Error al iniciar servidor: {}", e)),
+            };
+
+            let mut servidor_obj = HashMap::new();
+            
+            // servidor.aceptar()
+            let listener_clone = listener.clone();
+            servidor_obj.insert("aceptar".to_string(), Value::FuncionNativa(NativeFn(Rc::new(move |_| {
+                match listener_clone.accept() {
+                    Ok((stream, addr)) => {
+                        println!("Conexión aceptada de: {}", addr);
+                        let stream = Rc::new(RefCell::new(stream));
+                        
+                        let mut cliente_obj = HashMap::new();
+
+                        // cliente.leer()
+                        let stream_leer = stream.clone();
+                        cliente_obj.insert("leer".to_string(), Value::FuncionNativa(NativeFn(Rc::new(move |_| {
+                            let mut buffer = [0; 1024];
+                            match stream_leer.borrow_mut().read(&mut buffer) {
+                                Ok(n) => {
+                                    let s = String::from_utf8_lossy(&buffer[..n]).to_string();
+                                    Ok(Value::Texto(s))
+                                },
+                                Err(e) => Err(format!("Error al leer del socket: {}", e))
+                            }
+                        }))));
+
+                        // cliente.escribir(texto)
+                        let stream_escribir = stream.clone();
+                        cliente_obj.insert("escribir".to_string(), Value::FuncionNativa(NativeFn(Rc::new(move |args| {
+                            if args.len() != 1 {
+                                return Err("cliente.escribir espera 1 argumento (texto)".to_string());
+                            }
+                            let texto = args[0].a_texto();
+                            match stream_escribir.borrow_mut().write(texto.as_bytes()) {
+                                Ok(_) => Ok(Value::Logico(true)),
+                                Err(e) => Err(format!("Error al escribir en socket: {}", e))
+                            }
+                        }))));
+
+                        // cliente.cerrar()
+                        // En Rust, el socket se cierra cuando se dropea el TcpStream (Rc count llega a 0).
+                        // Podemos forzarlo o dejar que el GC de ÁGUILA lo maneje.
+                        // Por ahora, explícito no es necesario, pero útil para API.
+                        cliente_obj.insert("cerrar".to_string(), Value::FuncionNativa(NativeFn(Rc::new(|_| {
+                            Ok(Value::Logico(true))
+                        }))));
+
+                        Ok(Value::Instancia { clase: "ClienteTCP".to_string(), atributos: Rc::new(RefCell::new(cliente_obj)) })
+                    },
+                    Err(e) => Err(format!("Error al aceptar conexión: {}", e))
+                }
+            }))));
+
+            Ok(Value::Instancia { clase: "ServidorTCP".to_string(), atributos: Rc::new(RefCell::new(servidor_obj)) })
+        }))));
+
+        // red.conectar(host, puerto)
+        red_metodos.insert("conectar".to_string(), Value::FuncionNativa(NativeFn(Rc::new(|args| {
+            if args.len() != 2 {
+                return Err("red.conectar espera 2 argumentos (host, puerto)".to_string());
+            }
+            let host = args[0].a_texto();
+            let puerto = match &args[1] {
+                Value::Numero(n) => *n as u16,
+                _ => return Err("Puerto debe ser número".to_string()),
+            };
+
+            match TcpStream::connect(format!("{}:{}", host, puerto)) {
+                Ok(stream) => {
+                    let stream = Rc::new(RefCell::new(stream));
+                    let mut cliente_obj = HashMap::new();
+
+                    // cliente.leer()
+                    let stream_leer = stream.clone();
+                    cliente_obj.insert("leer".to_string(), Value::FuncionNativa(NativeFn(Rc::new(move |_| {
+                        let mut buffer = [0; 1024];
+                        match stream_leer.borrow_mut().read(&mut buffer) {
+                            Ok(n) => {
+                                let s = String::from_utf8_lossy(&buffer[..n]).to_string();
+                                Ok(Value::Texto(s))
+                            },
+                            Err(e) => Err(format!("Error al leer del socket: {}", e))
+                        }
+                    }))));
+
+                    // cliente.escribir(texto)
+                    let stream_escribir = stream.clone();
+                    cliente_obj.insert("escribir".to_string(), Value::FuncionNativa(NativeFn(Rc::new(move |args| {
+                        if args.len() != 1 {
+                            return Err("cliente.escribir espera 1 argumento (texto)".to_string());
+                        }
+                        let texto = args[0].a_texto();
+                        match stream_escribir.borrow_mut().write(texto.as_bytes()) {
+                            Ok(_) => Ok(Value::Logico(true)),
+                            Err(e) => Err(format!("Error al escribir en socket: {}", e))
+                        }
+                    }))));
+
+                    // cliente.cerrar()
+                    // cliente.cerrar()
+                    let stream_cerrar = stream.clone();
+                    cliente_obj.insert("cerrar".to_string(), Value::FuncionNativa(NativeFn(Rc::new(move |_| {
+                        match stream_cerrar.borrow_mut().shutdown(std::net::Shutdown::Both) {
+                            Ok(_) => Ok(Value::Logico(true)),
+                            Err(e) => Err(format!("Error al cerrar conexión: {}", e))
+                        }
+                    }))));
+
+                    Ok(Value::Instancia { clase: "ClienteTCP".to_string(), atributos: Rc::new(RefCell::new(cliente_obj)) })
+                },
+                Err(e) => Err(format!("Error al conectar: {}", e))
+            }
+        }))));
+
+        let red_modulo = Value::Diccionario(Rc::new(RefCell::new(red_metodos)));
+
+        if let Some(scope) = self.variables.first_mut() {
+            scope.borrow_mut().insert("red".to_string(), red_modulo);
+        }
+
+        // --- Módulo CADENA ---
+        let mut cadena_metodos = HashMap::new();
+
+        // cadena.dividir(texto, separador)
+        cadena_metodos.insert("dividir".to_string(), Value::FuncionNativa(NativeFn(Rc::new(|args| {
+            if args.len() != 2 {
+                return Err("cadena.dividir espera 2 argumentos (texto, separador)".to_string());
+            }
+            let texto = if let Value::Texto(s) = &args[0] { s } else { return Err("Arg 1 debe ser texto".to_string()) };
+            let separador = if let Value::Texto(s) = &args[1] { s } else { return Err("Arg 2 debe ser texto".to_string()) };
+
+            let partes: Vec<Value> = texto.split(separador)
+                .map(|s| Value::Texto(s.to_string()))
+                .collect();
+            
+            Ok(Value::Lista(Rc::new(RefCell::new(partes))))
+        }))));
+
+        // cadena.contiene(texto, subtexto)
+        cadena_metodos.insert("contiene".to_string(), Value::FuncionNativa(NativeFn(Rc::new(|args| {
+            if args.len() != 2 {
+                return Err("cadena.contiene espera 2 argumentos (texto, subtexto)".to_string());
+            }
+            let texto = if let Value::Texto(s) = &args[0] { s } else { return Err("Arg 1 debe ser texto".to_string()) };
+            let subtexto = if let Value::Texto(s) = &args[1] { s } else { return Err("Arg 2 debe ser texto".to_string()) };
+
+            Ok(Value::Logico(texto.contains(subtexto)))
+        }))));
+
+        let cadena_modulo = Value::Diccionario(Rc::new(RefCell::new(cadena_metodos)));
+
+        if let Some(scope) = self.variables.first_mut() {
+            scope.borrow_mut().insert("cadena".to_string(), cadena_modulo);
+        }
     }
 
-    fn ejecutar_sentencia(&mut self, sentencia: &Sentencia) -> Result<(), String> {
+    pub fn ejecutar(&mut self, programa: Programa) -> Result<Option<Value>, String> {
+        let mut ultimo_valor = None;
+        for sentencia in programa.sentencias {
+            ultimo_valor = self.ejecutar_sentencia(&sentencia)?;
+        }
+        Ok(ultimo_valor)
+    }
+
+    fn ejecutar_sentencia(&mut self, sentencia: &Sentencia) -> Result<Option<Value>, String> {
         match sentencia {
             Sentencia::Asignacion {
                 nombre,
@@ -39,18 +368,18 @@ impl Interprete {
             } => {
                 let val = self.evaluar_expresion(valor)?;
                 if let Some(scope) = self.variables.last_mut() {
-                    scope.borrow_mut().insert(nombre.clone(), val);
+                    scope.borrow_mut().insert(nombre.clone(), val.clone());
                 }
-                Ok(())
+                Ok(Some(val))
             }
             Sentencia::Expresion(expr) => {
-                self.evaluar_expresion(expr)?;
-                Ok(())
+                let val = self.evaluar_expresion(expr)?;
+                Ok(Some(val))
             }
             Sentencia::Imprimir(expr) => {
                 let val = self.evaluar_expresion(expr)?;
                 println!("{}", val.a_texto());
-                Ok(())
+                Ok(None)
             }
             Sentencia::Si {
                 condicion,
@@ -67,7 +396,7 @@ impl Interprete {
                         self.ejecutar_sentencia(sent)?;
                     }
                 }
-                Ok(())
+                Ok(None)
             }
             Sentencia::Mientras {
                 condicion,
@@ -82,7 +411,7 @@ impl Interprete {
                         self.ejecutar_sentencia(sent)?;
                     }
                 }
-                Ok(())
+                Ok(None)
             }
             Sentencia::Para {
                 variable,
@@ -113,7 +442,7 @@ impl Interprete {
                     }
                     _ => return Err("No se puede iterar sobre este tipo".to_string()),
                 }
-                Ok(())
+                Ok(None)
             }
             Sentencia::ParaRango {
                 variable,
@@ -129,18 +458,21 @@ impl Interprete {
                         self.ejecutar_sentencia(sent)?;
                     }
                 }
-                Ok(())
+
+                Ok(None)
             }
             Sentencia::Funcion {
                 nombre,
                 parametros,
+                retorno_tipo,
                 bloque,
+                es_asincrona,
             } => {
                 self.funciones.insert(
                     nombre.clone(),
-                    (parametros.clone(), bloque.clone()),
+                    (parametros.clone(), retorno_tipo.clone(), bloque.clone(), *es_asincrona),
                 );
-                Ok(())
+                Ok(None)
             }
             Sentencia::Clase {
                 nombre,
@@ -152,9 +484,111 @@ impl Interprete {
                     nombre.clone(),
                     (padre.clone(), atributos.clone(), metodos.clone()),
                 );
-                Ok(())
+                Ok(None)
             }
-            Sentencia::Retorno(_) => Ok(()),
+            Sentencia::Importar { ruta, alias } => {
+                // 1. Resolver nombre del módulo
+                let path = Path::new(ruta);
+                let nombre_modulo = alias.clone().unwrap_or_else(|| {
+                    path.file_stem()
+                        .and_then(|s| s.to_str())
+                        .unwrap_or("modulo")
+                        .to_string()
+                });
+
+                // 2. Leer archivo
+                let contenido = fs::read_to_string(ruta)
+                    .map_err(|e| format!("Error al importar '{}': {}", ruta, e))?;
+
+                // 3. Parsear
+                let mut lexer = Lexer::nuevo(&contenido);
+                let tokens = lexer.tokenizar();
+                let mut parser = Parser::nuevo(tokens);
+                let programa = parser.parsear()?;
+
+                // 4. Ejecutar en nuevo intérprete
+                let mut modulo_interprete = Interprete::nuevo();
+                modulo_interprete.ejecutar(programa)?;
+
+                // 5. Extraer variables globales y funciones
+                let mut exportaciones = HashMap::new();
+                
+                // Variables
+                if let Some(global_scope) = modulo_interprete.variables.first() {
+                    for (k, v) in global_scope.borrow().iter() {
+                        exportaciones.insert(k.clone(), v.clone());
+                    }
+                }
+
+                // Funciones
+                let global_scope_ref = modulo_interprete.variables.first().unwrap().clone();
+                for (nombre_func, (params, _retorno_tipo, body, es_asincrona)) in modulo_interprete.funciones.iter() {
+                    let val_func = Value::Funcion(
+                        params.iter().map(|(n, _)| n.clone()).collect(),
+                        body.clone(),
+                        Rc::new(RefCell::new(HashMap::new())), // Closure vacío por ahora para globales
+                        *es_asincrona,
+                    );
+                    exportaciones.insert(nombre_func.clone(), val_func);
+                }
+
+                let modulo_obj = Value::Diccionario(Rc::new(RefCell::new(exportaciones)));
+                
+                if let Some(scope) = self.variables.last_mut() {
+                    scope.borrow_mut().insert(alias.clone().unwrap_or_else(|| path.file_stem().unwrap().to_str().unwrap().to_string()), modulo_obj);
+                }
+                Ok(None)
+            }
+            Sentencia::Intentar {
+                bloque_intentar,
+                variable_error,
+                bloque_capturar,
+            } => {
+                let mut error_ocurrido = None;
+
+                // Ejecutar bloque intentar
+                for sent in bloque_intentar {
+                    match self.ejecutar_sentencia(sent) {
+                        Ok(_) => {
+                            if self.retorno_actual.is_some() {
+                                return Ok(None);
+                            }
+                        }
+                        Err(msg) => {
+                            error_ocurrido = Some(msg);
+                            break;
+                        }
+                    }
+                }
+
+                // Si hubo error, ejecutar bloque capturar
+                if let Some(msg) = error_ocurrido {
+                    let mut nuevo_scope = HashMap::new();
+                    nuevo_scope.insert(variable_error.clone(), Value::Texto(msg));
+                    
+                    self.variables.push(Rc::new(RefCell::new(nuevo_scope)));
+
+                    for sent in bloque_capturar {
+                        self.ejecutar_sentencia(sent)?;
+                        if self.retorno_actual.is_some() {
+                            break;
+                        }
+                    }
+
+                    self.variables.pop();
+                }
+
+                Ok(None)
+            }
+            Sentencia::Retorno(expr_opt) => {
+                let val = if let Some(expr) = expr_opt {
+                    self.evaluar_expresion(expr)?
+                } else {
+                    Value::Nulo
+                };
+                self.retorno_actual = Some(val);
+                Ok(None)
+            }
         }
     }
 
@@ -172,6 +606,14 @@ impl Interprete {
                 }
                 Ok(Value::Lista(Rc::new(RefCell::new(lista))))
             }
+            Expresion::Interpolacion(partes) => {
+                let mut resultado = String::new();
+                for parte in partes {
+                    let val = self.evaluar_expresion(parte)?;
+                    resultado.push_str(&val.a_texto());
+                }
+                Ok(Value::Texto(resultado))
+            }
             Expresion::Diccionario(pares) => {
                 let mut dict = HashMap::new();
                 for (clave, expr) in pares {
@@ -179,6 +621,18 @@ impl Interprete {
                     dict.insert(clave.clone(), valor);
                 }
                 Ok(Value::Diccionario(Rc::new(RefCell::new(dict))))
+            }
+            Expresion::FuncionAnonima { parametros, bloque, es_asincrona } => {
+                Ok(Value::Funcion(
+                    parametros.clone(),
+                    bloque.clone(),
+                    self.variables.last().unwrap().clone(),
+                    *es_asincrona,
+                ))
+            }
+            Expresion::Esperar(expr) => {
+                // En el intérprete síncrono, esperar simplemente evalúa la expresión
+                self.evaluar_expresion(expr)
             }
             Expresion::BinOp { izq, op, der } => {
                 self.evaluar_binop(izq, op, der)
@@ -210,6 +664,38 @@ impl Interprete {
             }
             Expresion::Instancia { clase, args } => {
                 self.crear_instancia(clase, args)
+            }
+            Expresion::AccesoIndice { objeto, indice } => {
+                let obj = self.evaluar_expresion(objeto)?;
+                let idx = self.evaluar_expresion(indice)?;
+
+                match obj {
+                    Value::Lista(lista) => {
+                        if let Value::Numero(n) = idx {
+                            let i = n as usize;
+                            let l = lista.borrow();
+                            if i < l.len() {
+                                Ok(l[i].clone())
+                            } else {
+                                Err(format!("Índice fuera de rango: {}", i))
+                            }
+                        } else {
+                            Err("El índice de lista debe ser un número".to_string())
+                        }
+                    }
+                    Value::Diccionario(dict) => {
+                        if let Value::Texto(clave) = idx {
+                            if let Some(val) = dict.borrow().get(&clave) {
+                                Ok(val.clone())
+                            } else {
+                                Err(format!("Clave '{}' no encontrada en diccionario", clave))
+                            }
+                        } else {
+                            Err("La clave de diccionario debe ser texto".to_string())
+                        }
+                    }
+                    _ => Err("Solo se pueden indexar listas y diccionarios".to_string()),
+                }
             }
         }
     }
@@ -279,140 +765,406 @@ impl Interprete {
         Err(format!("Error: Variable '{}' no definida", nombre))
     }
 
+    fn obtener_variable_val(&self, nombre: &str) -> Option<Value> {
+        for scope in self.variables.iter().rev() {
+            if let Some(val) = scope.borrow().get(nombre) {
+                return Some(val.clone());
+            }
+        }
+        None
+    }
+
     fn ejecutar_llamada(&mut self, nombre: &str, args: &[Expresion]) -> Result<Value, String> {
         // Primero, intenta como clase (instancia)
         if self.clases.contains_key(nombre) {
             return self.crear_instancia(nombre, args);
         }
 
-        // Luego, intenta como función
-        if let Some((parametros, bloque)) = self.funciones.get(nombre).cloned() {
+        // Luego, intenta como función nativa
+        // Luego, intenta como función nativa o closure
+        if let Some(val) = self.obtener_variable_val(nombre) {
+            match val {
+                Value::FuncionNativa(f) => {
+                    let mut args_vals = Vec::new();
+                    for arg in args {
+                        args_vals.push(self.evaluar_expresion(arg)?);
+                    }
+                    return (f.0)(&args_vals);
+                },
+                Value::Funcion(parametros, bloque, closure, _es_asincrona) => {
+                    let mut nuevo_scope = closure.borrow().clone();
+                    
+                    for (i, param_name) in parametros.iter().enumerate() {
+                        let arg_val = if i < args.len() {
+                            self.evaluar_expresion(&args[i])?
+                        } else {
+                            Value::Nulo
+                        };
+                        nuevo_scope.insert(param_name.clone(), arg_val);
+                    }
+                    
+                    self.variables.push(Rc::new(RefCell::new(nuevo_scope)));
+                    
+                    for sent in &bloque {
+                        self.ejecutar_sentencia(sent)?;
+                        if self.retorno_actual.is_some() {
+                            break;
+                        }
+                    }
+                    
+                    self.variables.pop();
+                    return Ok(self.retorno_actual.take().unwrap_or(Value::Nulo));
+                },
+                _ => {}
+            }
+        }
+
+        // Luego, intenta como función definida globalmente
+        if let Some((parametros, _retorno_tipo, bloque, _es_asincrona)) = self.funciones.get(nombre).cloned() {
             let mut nuevo_scope = HashMap::new();
 
-            for (i, (param_name, _)) in parametros.iter().enumerate() {
+            for (i, (param_name, param_type)) in parametros.iter().enumerate() {
                 let arg_val = if i < args.len() {
                     self.evaluar_expresion(&args[i])?
                 } else {
                     Value::Nulo
                 };
+
+                if let Some(tipo) = param_type {
+                    if !self.verificar_tipo(&arg_val, tipo) {
+                        return Err(format!(
+                            "Error de Tipo: Argumento '{}' espera {}, se recibió {:?}",
+                            param_name, tipo, arg_val
+                        ));
+                    }
+                }
+
                 nuevo_scope.insert(param_name.clone(), arg_val);
             }
 
             self.variables.push(Rc::new(RefCell::new(nuevo_scope)));
 
-            for sent in &bloque {
-                self.ejecutar_sentencia(sent)?;
+        for sent in &bloque {
+            self.ejecutar_sentencia(sent)?;
+            if self.retorno_actual.is_some() {
+                break;
             }
-
-            self.variables.pop();
-            Ok(Value::Nulo)
-        } else {
-            Err(format!("Error: Función '{}' no definida", nombre))
         }
+
+        self.variables.pop();
+        Ok(self.retorno_actual.take().unwrap_or(Value::Nulo))
+    } else {
+        Err(format!("Error: Función '{}' no definida", nombre))
+    }
     }
 
     fn crear_instancia(&mut self, clase_nombre: &str, args: &[Expresion]) -> Result<Value, String> {
-        if let Some((_padre, atributos, metodos_all)) = self.clases.get(clase_nombre).cloned() {
+        // 1. Buscar la clase
+        if let Some(val_clase) = self.obtener_variable_val(clase_nombre) {
+            if let Value::Clase(_, _) = val_clase {
+                 // ... (lógica anterior que usaba Value::Clase directamente)
+                 // Pero ahora usamos self.clases
+                 return Err("Lógica de instanciación antigua detectada".to_string());
+            }
+        }
+        
+        // Nueva lógica usando self.clases
+        if let Some((_, scope_clase, metodos_all)) = self.clases.get(clase_nombre).cloned() {
+            // 2. Crear el objeto con los atributos iniciales (copia del scope de clase)
             let mut objeto = HashMap::new();
-
-            // Inicializar atributos
-            for (attr_name, _) in &atributos {
+            // scope_clase es Vec<(String, Option<String>)> (atributos definidos en la clase)
+            for (attr_name, _) in scope_clase.iter() {
                 objeto.insert(attr_name.clone(), Value::Nulo);
             }
 
-            let mut instancia = Value::Objeto(clase_nombre.to_string(), Rc::new(RefCell::new(objeto)));
+            let mut instancia = Value::Instancia { clase: clase_nombre.to_string(), atributos: Rc::new(RefCell::new(objeto)) };
 
             // Buscar y ejecutar constructor (__init__)
             for (metodo_nombre, parametros, bloque) in metodos_all {
-                if metodo_nombre == "__init__" {
-                    let mut nuevo_scope = HashMap::new();
-                    nuevo_scope.insert("self".to_string(), instancia.clone());
-
-                    for (i, (param_name, _)) in parametros.iter().enumerate() {
-                        if param_name != "self" {
-                            let arg_val = if i - 1 < args.len() {
-                                self.evaluar_expresion(&args[i - 1])?
-                            } else {
-                                Value::Nulo
-                            };
-                            nuevo_scope.insert(param_name.clone(), arg_val);
-                        }
-                    }
-
-                    self.variables.push(Rc::new(RefCell::new(nuevo_scope)));
-
-                    for sent in &bloque {
-                        self.ejecutar_sentencia(sent)?;
-                    }
-
-                    if let Some(scope) = self.variables.pop() {
-                        if let Some(self_val) = scope.borrow().get("self") {
-                            instancia = self_val.clone();
-                        }
-                    }
+                if metodo_nombre == "constructor" {
+                     // Ejecutar constructor (similar a ejecutar_metodo)
+                     let mut valores_args = Vec::new();
+                     for arg in args {
+                         valores_args.push(self.evaluar_expresion(arg)?);
+                     }
+                     
+                     if valores_args.len() != parametros.len() {
+                         return Err(format!("Constructor espera {} argumentos, se recibieron {}", parametros.len(), valores_args.len()));
+                     }
+                     
+                     let mut scope_metodo = HashMap::new();
+                     scope_metodo.insert("this".to_string(), instancia.clone());
+                     
+                     for (i, (param, _)) in parametros.iter().enumerate() {
+                         scope_metodo.insert(param.clone(), valores_args[i].clone());
+                     }
+                     
+                     self.variables.push(Rc::new(RefCell::new(scope_metodo)));
+                     let programa = crate::ast::Programa { sentencias: bloque.clone() };
+                     self.ejecutar(programa)?;
+                     self.variables.pop();
+                     
+                     return Ok(instancia);
                 }
             }
-
+            
             Ok(instancia)
         } else {
-            Err(format!("Error: Clase '{}' no definida", clase_nombre))
+            Err(format!("Clase '{}' no definida", clase_nombre))
+        }
+    }
+
+    fn registrar_modulo_db(&mut self) {
+        let mut metodos_db = HashMap::new();
+
+        metodos_db.insert(
+            "conectar".to_string(),
+            Value::FuncionNativa(crate::types::NativeFn(Rc::new(|args: &[Value]| {
+                if args.len() != 1 {
+                    return Err("db.conectar espera 1 argumento (url)".to_string());
+                }
+                if let Value::Texto(url) = &args[0] {
+                    match postgres::Client::connect(url.as_str(), postgres::NoTls) {
+                        Ok(client) => Ok(Value::BaseDeDatos(crate::types::DbClient(Rc::new(RefCell::new(client))))),
+                        Err(e) => Err(format!("Error de conexión: {}", e)),
+                    }
+                } else {
+                    Err("db.conectar espera texto".to_string())
+                }
+            }))),
+        );
+
+        let db_modulo = Value::Diccionario(Rc::new(RefCell::new(metodos_db)));
+        if let Some(scope) = self.variables.first_mut() {
+            scope.borrow_mut().insert("db".to_string(), db_modulo);
+        }
+    }
+
+    fn evaluar_metodo(&mut self, objeto: Value, metodo: String, args: Vec<Value>) -> Result<Value, String> {
+        match objeto {
+            Value::BaseDeDatos(db_client) => {
+                let mut client = db_client.0.borrow_mut();
+                match metodo.as_str() {
+                    "consulta" => {
+                        if args.len() != 1 { return Err("consulta espera 1 argumento (sql)".to_string()); }
+                        if let Value::Texto(sql) = &args[0] {
+                            match client.query(sql.as_str(), &[]) {
+                                Ok(filas) => {
+                                    let mut resultados = Vec::new();
+                                    for fila in filas {
+                                        let mut dic = HashMap::new();
+                                        for (i, columna) in fila.columns().iter().enumerate() {
+                                            let nombre = columna.name().to_string();
+                                            // Mapeo básico de tipos
+                                            let valor = if let Ok(v) = fila.try_get::<_, String>(i) {
+                                                Value::Texto(v)
+                                            } else if let Ok(v) = fila.try_get::<_, i32>(i) {
+                                                Value::Numero(v as f64)
+                                            } else if let Ok(v) = fila.try_get::<_, bool>(i) {
+                                                Value::Logico(v)
+                                            } else {
+                                                Value::Nulo
+                                            };
+                                            dic.insert(nombre, valor);
+                                        }
+                                        resultados.push(Value::Diccionario(Rc::new(RefCell::new(dic))));
+                                    }
+                                    Ok(Value::Lista(Rc::new(RefCell::new(resultados))))
+                                }
+                                Err(e) => Err(format!("Error en consulta: {}", e)),
+                            }
+                        } else {
+                            Err("consulta espera texto SQL".to_string())
+                        }
+                    }
+                    "ejecutar" => {
+                        if args.len() != 1 { return Err("ejecutar espera 1 argumento (sql)".to_string()); }
+                        if let Value::Texto(sql) = &args[0] {
+                            match client.execute(sql.as_str(), &[]) {
+                                Ok(filas_afectadas) => Ok(Value::Numero(filas_afectadas as f64)),
+                                Err(e) => Err(format!("Error en ejecución: {}", e)),
+                            }
+                        } else {
+                            Err("ejecutar espera texto SQL".to_string())
+                        }
+                    }
+                    "cerrar" => {
+                        Ok(Value::Nulo)
+                    }
+                    _ => Err(format!("Método '{}' no definido para BaseDeDatos", metodo)),
+                }
+            }
+            _ => Err(format!("No se puede llamar al método '{}' en este tipo de objeto", metodo)),
         }
     }
 
     fn ejecutar_metodo(&mut self, objeto: &Value, metodo: &str, args: &[Expresion]) -> Result<Value, String> {
-        if let Value::Objeto(clase_nombre, _) = objeto {
+        if let Value::Instancia { clase: clase_nombre, atributos } = objeto {
+            // 1. Intentar buscar en la definición de la clase
             if let Some((_, _, metodos)) = self.clases.get(clase_nombre).cloned() {
                 for (metodo_nombre, parametros, bloque) in metodos {
                     if metodo_nombre == metodo {
-                        let mut nuevo_scope = HashMap::new();
-                        nuevo_scope.insert("self".to_string(), objeto.clone());
-
-                        for (i, (param_name, _)) in parametros.iter().enumerate() {
-                            if param_name != "self" {
-                                let arg_val = if i - 1 < args.len() {
-                                    self.evaluar_expresion(&args[i - 1])?
-                                } else {
-                                    Value::Nulo
-                                };
-                                nuevo_scope.insert(param_name.clone(), arg_val);
-                            }
+                        // Evaluar argumentos
+                        let mut valores_args = Vec::new();
+                        for arg in args {
+                            valores_args.push(self.evaluar_expresion(arg)?);
                         }
 
-                        self.variables.push(Rc::new(RefCell::new(nuevo_scope)));
-
-                        for sent in &bloque {
-                            self.ejecutar_sentencia(sent)?;
+                        if valores_args.len() != parametros.len() {
+                            return Err(format!("Método '{}' espera {} argumentos, se recibieron {}", metodo, parametros.len(), valores_args.len()));
                         }
 
+                        // Crear scope para el método
+                        let mut scope_metodo = HashMap::new();
+                        // 'this' apunta a la instancia
+                        scope_metodo.insert("this".to_string(), objeto.clone());
+
+                        for (i, (param, _)) in parametros.iter().enumerate() {
+                            scope_metodo.insert(param.clone(), valores_args[i].clone());
+                        }
+
+                        self.variables.push(Rc::new(RefCell::new(scope_metodo)));
+                        let programa = crate::ast::Programa { sentencias: bloque.clone() };
+                        let resultado = self.ejecutar(programa);
                         self.variables.pop();
-                        return Ok(Value::Nulo);
+
+                        return resultado.map(|opt| opt.unwrap_or(Value::Nulo));
                     }
                 }
             }
-            Err(format!("Error: Método '{}' no encontrado", metodo))
-        } else {
-            Err("Error: No es un objeto".to_string())
+            
+            // 2. Intentar buscar en los atributos del objeto (para métodos dinámicos)
+            if let Some(val) = atributos.borrow().get(metodo) {
+                 match val {
+                     Value::FuncionNativa(native_fn) => {
+                        let mut valores_args = Vec::new();
+                        for arg in args {
+                            valores_args.push(self.evaluar_expresion(arg)?);
+                        }
+                        return (native_fn.0)(&valores_args);
+                     },
+                     Value::Funcion(..) => {
+                         return Err("Llamada a función en atributo no implementada completamente".to_string());
+                     },
+                     _ => {}
+                 }
+            }
+
+            return Err(format!("Método '{}' no encontrado en clase '{}'", metodo, clase_nombre));
+        } else if let Value::Diccionario(map) = objeto {
+            // Soporte para módulos (que son diccionarios de funciones)
+            if let Some(val) = map.borrow().get(metodo) {
+                match val {
+                    Value::FuncionNativa(native_fn) => {
+                        let mut valores_args = Vec::new();
+                        for arg in args {
+                            valores_args.push(self.evaluar_expresion(arg)?);
+                        }
+                        return (native_fn.0)(&valores_args);
+                    }
+                    Value::Funcion(..) => {
+                         return Err("Llamada a función definida por usuario en módulo no implementada aún".to_string());
+                    }
+                    _ => return Err(format!("'{}' no es una función", metodo)),
+                }
+            } else {
+                return Err(format!("Método '{}' no encontrado en el módulo/diccionario", metodo));
+            }
+        }
+        
+        // Si no es instancia ni diccionario, intentar métodos nativos (listas, etc) o DB
+        let mut valores_args = Vec::new();
+        for arg in args {
+            valores_args.push(self.evaluar_expresion(arg)?);
+        }
+        self.evaluar_metodo(objeto.clone(), metodo.to_string(), valores_args)
+    }
+
+    fn verificar_tipo(&self, valor: &Value, tipo_esperado: &str) -> bool {
+        match (valor, tipo_esperado) {
+            (Value::Numero(_), "Numero") => true,
+            (Value::Texto(_), "Texto") => true,
+            (Value::Logico(_), "Logico") => true,
+            (Value::Nulo, "Nulo") => true,
+            (Value::Lista(_), "Lista") => true,
+            (Value::Diccionario(_), "Diccionario") => true,
+            (_, "Cualquiera") => true,
+            _ => false,
         }
     }
 
     fn acceder_atributo(&self, objeto: &Value, atributo: &str) -> Result<Value, String> {
-        if let Value::Objeto(_, attrs) = objeto {
-            if let Some(val) = attrs.borrow().get(atributo) {
+        if let Value::Instancia { clase: _, atributos } = objeto {
+            if let Some(val) = atributos.borrow().get(atributo) {
                 Ok(val.clone())
             } else {
-                Err(format!("Error: Atributo '{}' no existe", atributo))
+                Err(format!("Error: Atributo '{}' no encontrado", atributo))
+            }
+        } else if let Value::Clase(_, _) = objeto {
+             // TODO: Implementar herencia de atributos estáticos si es necesario
+             Err(format!("Error: No se puede acceder al atributo '{}' en la clase", atributo))
+        } else if let Value::Diccionario(map) = objeto {
+             if let Some(val) = map.borrow().get(atributo) {
+                Ok(val.clone())
+            } else {
+                Err(format!("Error: Clave '{}' no encontrada en diccionario", atributo))
             }
         } else {
-            Err("Error: No es un objeto".to_string())
+            Err("Error: No es un objeto o diccionario".to_string())
         }
     }
 
-    fn asignar_atributo(&self, objeto: &Value, atributo: &str, valor: Value) -> Result<(), String> {
-        if let Value::Objeto(_, attrs) = objeto {
-            attrs.borrow_mut().insert(atributo.to_string(), valor);
+    fn asignar_atributo(&mut self, objeto: &Value, atributo: &str, valor: Value) -> Result<(), String> {
+        if let Value::Instancia { clase: _, atributos } = objeto {
+            atributos.borrow_mut().insert(atributo.to_string(), valor);
+            Ok(())
+        } else if let Value::Diccionario(map) = objeto {
+            map.borrow_mut().insert(atributo.to_string(), valor);
             Ok(())
         } else {
-            Err("Error: No es un objeto".to_string())
+            Err("Error: No es un objeto o diccionario".to_string())
         }
+    }
+}
+
+// Funciones auxiliares para JSON
+fn json_to_value(v: &serde_json::Value) -> Value {
+    match v {
+        serde_json::Value::Null => Value::Nulo,
+        serde_json::Value::Bool(b) => Value::Logico(*b),
+        serde_json::Value::Number(n) => Value::Numero(n.as_f64().unwrap_or(0.0)),
+        serde_json::Value::String(s) => Value::Texto(s.clone()),
+        serde_json::Value::Array(arr) => {
+            let list = arr.iter().map(json_to_value).collect();
+            Value::Lista(Rc::new(RefCell::new(list)))
+        },
+        serde_json::Value::Object(obj) => {
+            let mut map = HashMap::new();
+            for (k, v) in obj {
+                map.insert(k.clone(), json_to_value(v));
+            }
+            Value::Diccionario(Rc::new(RefCell::new(map)))
+        },
+    }
+}
+
+fn value_to_json(v: &Value) -> serde_json::Value {
+    match v {
+        Value::Nulo => serde_json::Value::Null,
+        Value::Logico(b) => serde_json::Value::Bool(*b),
+        Value::Numero(n) => serde_json::Number::from_f64(*n).map(serde_json::Value::Number).unwrap_or(serde_json::Value::Null),
+        Value::Texto(s) => serde_json::Value::String(s.clone()),
+        Value::Lista(list) => {
+            let arr = list.borrow().iter().map(value_to_json).collect();
+            serde_json::Value::Array(arr)
+        },
+        Value::Diccionario(map) => {
+            let mut obj = serde_json::Map::new();
+            for (k, v) in map.borrow().iter() {
+                obj.insert(k.clone(), value_to_json(v));
+            }
+            serde_json::Value::Object(obj)
+        },
+        _ => serde_json::Value::String(v.a_texto()),
     }
 }

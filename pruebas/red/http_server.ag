@@ -1,0 +1,38 @@
+# pruebas/red/http_server.ag
+puerto = 8082
+servidor = red.servidor(puerto)
+imprimir "Servidor HTTP escuchando en http://localhost:" + puerto
+
+mientras verdadero {
+    cliente = servidor.aceptar()
+    peticion = cliente.leer()
+    imprimir "DEBUG: Peticion recibida: '" + peticion + "'"
+    
+    # Parseo básico: obtener primera línea
+    lineas = cadena.dividir(peticion, "\n")
+    primera_linea = lineas[0]
+    partes = cadena.dividir(primera_linea, " ")
+    
+    metodo = partes[0]
+    ruta = partes[1]
+    
+    imprimir "Petición: " + metodo + " " + ruta
+    
+    si ruta == "/" {
+        cuerpo = "<h1>Hola desde Aguila Web! 🦅</h1><p>Este es un servidor HTTP escrito en Aguila.</p>"
+        respuesta = "HTTP/1.1 200 OK\r\nContent-Type: text/html; charset=utf-8\r\nContent-Length: " + 90 + "\r\n\r\n" + cuerpo
+        cliente.escribir(respuesta)
+    } sino {
+        si ruta == "/api/status" {
+            json_resp = '{"status": "ok", "lenguaje": "Aguila"}'
+            respuesta = "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: " + 38 + "\r\n\r\n" + json_resp
+            cliente.escribir(respuesta)
+        } sino {
+            cuerpo = "<h1>404 No Encontrado</h1>"
+            respuesta = "HTTP/1.1 404 Not Found\r\nContent-Type: text/html\r\nContent-Length: " + 29 + "\r\n\r\n" + cuerpo
+            cliente.escribir(respuesta)
+        }
+    }
+    
+    cliente.cerrar()
+}

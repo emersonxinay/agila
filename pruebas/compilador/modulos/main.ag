@@ -1,0 +1,5 @@
+# pruebas/compilador/modulos/main.ag
+importar "./lib.ag" as lib
+imprimir lib.saludar("Mundo")
+imprimir "PI es: "
+imprimir lib.PI

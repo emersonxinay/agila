@@ -1,0 +1,12 @@
+# pruebas/tipos/sintaxis.ag
+funcion suma(a: Numero, b: Numero) -> Numero {
+    retornar a + b
+}
+
+imprimir "Suma: " + suma(10, 20)
+
+funcion saludo(nombre: Texto) -> Texto {
+    retornar "Hola " + nombre
+}
+
+imprimir saludo("Mundo")

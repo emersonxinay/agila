@@ -1,0 +1,9 @@
+# main.ag
+importar "pruebas/modulos/lib.ag" como mi_lib
+
+imprimir "Probando módulos..."
+imprimir mi_lib.mensaje
+imprimir "Valor: " + mi_lib.valor
+
+res = mi_lib.sumar(10, 20)
+imprimir "Suma: " + res

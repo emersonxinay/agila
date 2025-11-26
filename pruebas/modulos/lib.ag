@@ -1,0 +1,7 @@
+# lib.ag
+mensaje = "Hola desde el módulo"
+valor = 42
+
+funcion sumar(a, b) {
+    retornar a + b
+}

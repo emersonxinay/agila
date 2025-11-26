@@ -1,0 +1,28 @@
+# pruebas/compilador/clases.ag
+clase Animal {
+    nombre: Texto
+    constructor(n) {
+        this.nombre = n
+    }
+    hacer_sonido() {
+        imprimir "..."
+    }
+}
+
+clase Perro : Animal {
+    hacer_sonido() {
+        imprimir "Guau!"
+    }
+}
+
+p = nuevo Perro("Firulais")
+imprimir "Nombre del perro:"
+imprimir p.nombre
+imprimir "Sonido:"
+p.hacer_sonido()
+
+a = nuevo Animal("Generico")
+imprimir "Nombre del animal:"
+imprimir a.nombre
+imprimir "Sonido:"
+a.hacer_sonido()

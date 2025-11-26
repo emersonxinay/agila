@@ -1,0 +1,15 @@
+# pruebas/compilador/variables.ag
+x = 10
+y = 20
+suma = x + y
+imprimir "La suma es: "
+imprimir suma
+
+x = x + 1
+imprimir "x incrementado: "
+imprimir x
+
+# Operaciones complejas
+resultado = (x * 2) + (y / 2)
+imprimir "Resultado complejo: "
+imprimir resultado

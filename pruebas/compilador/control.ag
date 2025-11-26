@@ -1,0 +1,20 @@
+# pruebas/compilador/control.ag
+x = 10
+si x > 5 {
+    imprimir "Mayor a 5"
+} sino {
+    imprimir "Menor o igual"
+}
+
+si x < 5 {
+    imprimir "Esto no debe salir"
+}
+
+contador = 0
+mientras contador < 3 {
+    imprimir "Contador: "
+    imprimir contador
+    contador = contador + 1
+}
+
+imprimir "Fin del bucle"

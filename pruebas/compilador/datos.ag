@@ -1,0 +1,19 @@
+# pruebas/compilador/datos.ag
+numeros = [10, 20, 30]
+imprimir "Lista original:"
+imprimir numeros
+imprimir "Elemento 1:"
+imprimir numeros[1]
+
+usuario = {
+    "nombre": "Juan",
+    "edad": 25
+}
+imprimir "Diccionario:"
+imprimir usuario
+imprimir "Nombre:"
+imprimir usuario["nombre"]
+
+matriz = [[1, 2], [3, 4]]
+imprimir "Matriz [1][0]:"
+imprimir matriz[1][0]

@@ -3,6 +3,7 @@ pub enum Token {
     // Literales
     Numero(f64),
     Texto(String),
+    TextoInterpolado(String),
     Identificador(String),
 
     // Palabras clave
@@ -18,6 +19,13 @@ pub enum Token {
     Verdadero,
     Falso,
     Nulo,
+    Importar,
+    Retornar,
+    Intentar,
+    Capturar,
+    Nuevo,
+    Asincrono,
+    Esperar,
 
     // Operadores
     Mas,
@@ -35,6 +43,7 @@ pub enum Token {
     DosPuntos,
     Coma,
     Dos,
+    Flecha,
 
     // Delimitadores
     ParAbre,
@@ -48,7 +57,7 @@ pub enum Token {
     EOF,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Sentencia {
     Asignacion {
         nombre: String,
@@ -79,7 +88,9 @@ pub enum Sentencia {
     Funcion {
         nombre: String,
         parametros: Vec<(String, Option<String>)>,
+        retorno_tipo: Option<String>,
         bloque: Vec<Sentencia>,
+        es_asincrona: bool,
     },
     Clase {
         nombre: String,
@@ -88,10 +99,19 @@ pub enum Sentencia {
         metodos: Vec<(String, Vec<(String, Option<String>)>, Vec<Sentencia>)>,
     },
     Retorno(Option<Expresion>),
+    Importar {
+        ruta: String,
+        alias: Option<String>,
+    },
+    Intentar {
+        bloque_intentar: Vec<Sentencia>,
+        variable_error: String,
+        bloque_capturar: Vec<Sentencia>,
+    },
     Imprimir(Expresion),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Expresion {
     Numero(f64),
     Texto(String),
@@ -100,6 +120,7 @@ pub enum Expresion {
     Identificador(String),
     Lista(Vec<Expresion>),
     Diccionario(Vec<(String, Expresion)>),
+    Interpolacion(Vec<Expresion>),
     BinOp {
         izq: Box<Expresion>,
         op: String,
@@ -127,6 +148,16 @@ pub enum Expresion {
         clase: String,
         args: Vec<Expresion>,
     },
+    AccesoIndice {
+        objeto: Box<Expresion>,
+        indice: Box<Expresion>,
+    },
+    FuncionAnonima {
+        parametros: Vec<String>,
+        bloque: Vec<Sentencia>,
+        es_asincrona: bool,
+    },
+    Esperar(Box<Expresion>),
 }
 
 #[derive(Debug, Clone)]

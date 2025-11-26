@@ -1,0 +1,22 @@
+texto_json = '{"nombre": "Aguila", "version": 1.2, "activo": true, "lista": [1, 2, 3]}'
+
+imprimir "Parseando JSON..."
+obj = json.parsear(texto_json)
+
+imprimir "Nombre: " + obj.nombre
+imprimir "Versión: " + obj.version
+imprimir "Activo: " + obj.activo
+imprimir "Lista: " + obj.lista
+
+imprimir "Modificando objeto..."
+obj.nuevo_campo = "Agregado dinámicamente"
+
+imprimir "Stringificando JSON..."
+nuevo_json = json.stringificar(obj)
+imprimir nuevo_json
+
+si obj.nombre == "Aguila" {
+    imprimir "¡ÉXITO! JSON parseado y generado correctamente."
+} sino {
+    imprimir "FALLO: Error en validación JSON."
+}

@@ -1,0 +1,15 @@
+# pruebas/red/servidor.ag
+puerto = 8081
+imprimir "Iniciando servidor en puerto " + puerto
+servidor = red.servidor(puerto)
+
+imprimir "Esperando cliente..."
+cliente = servidor.aceptar()
+
+imprimir "Cliente conectado!"
+datos = cliente.leer()
+imprimir "Recibido: " + datos
+
+respuesta = "Hola desde ÁGUILA TCP\n"
+cliente.escribir(respuesta)
+imprimir "Respuesta enviada."

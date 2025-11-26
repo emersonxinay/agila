@@ -1,0 +1,7 @@
+# pruebas/tipos/error.ag
+funcion suma(a: Numero, b: Numero) -> Numero {
+    retornar a + b
+}
+
+imprimir "Probando error de tipo..."
+suma("1", "2")

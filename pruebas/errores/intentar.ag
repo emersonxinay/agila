@@ -1,0 +1,20 @@
+# pruebas/errores/intentar.ag
+imprimir "Iniciando prueba de error..."
+
+intentar {
+    imprimir "Intentando leer archivo inexistente..."
+    fs.leer("archivo_fantasma.txt")
+    imprimir "Esto no debería imprimirse"
+} capturar e {
+    imprimir "Error capturado exitosamente: " + e
+}
+
+imprimir "El programa continúa después del error."
+
+intentar {
+    imprimir "Bloque sin errores..."
+} capturar e {
+    imprimir "Esto no debería imprimirse (captura sin error)"
+}
+
+imprimir "Fin de la prueba."

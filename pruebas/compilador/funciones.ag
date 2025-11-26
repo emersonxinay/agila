@@ -1,0 +1,18 @@
+# pruebas/compilador/funciones.ag
+funcion sumar(a, b) {
+    retornar a + b
+}
+
+res = sumar(10, 20)
+imprimir "Suma: "
+imprimir res
+
+funcion scope_test() {
+    res = 500 # Variable local, debe llevar let
+    imprimir "Dentro de funcion: "
+    imprimir res
+}
+
+scope_test()
+imprimir "Fuera de funcion (debe ser 30): "
+imprimir res

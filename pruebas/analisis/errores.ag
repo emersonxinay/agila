@@ -1,0 +1,21 @@
+# pruebas/analisis/errores.ag
+
+# Caso 1: Variable no definida
+imprimir x
+
+# Caso 2: Función no definida
+no_existe()
+
+# Caso 3: Aridad incorrecta
+funcion suma(a, b) {
+    retornar a + b
+}
+suma(1)
+
+# Caso 4: Correcto
+y = 10
+imprimir y
+suma(10, 20)
+
+# Caso 5: Tipo incorrecto
+z: Numero = "texto"

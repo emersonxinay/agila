@@ -4,8 +4,12 @@ mod parser;
 mod types;
 mod interpreter;
 mod cli;
+mod compiler;
+mod analyzer;
+mod repl;
 
 use std::env;
+use cli::{cli_ejecutar, cli_chequear, cli_compilar, cli_dev};
 
 const VERSION: &str = "0.1.0";
 
@@ -13,25 +17,53 @@ fn main() {
     let args: Vec<String> = env::args().collect();
 
     if args.len() < 2 {
-        // Si no hay argumentos, iniciar REPL por defecto
-        cli::cli_repl();
+        // Modo REPL por defecto
+        repl::iniciar();
         return;
     }
 
-    match args[1].as_str() {
+    let comando = &args[1];
+    match comando.as_str() {
         "ejecutar" => {
             if args.len() < 3 {
                 eprintln!("Uso: aguila ejecutar <archivo.ag>");
                 return;
             }
-            if let Err(e) = cli::cli_ejecutar(&args[2]) {
+            let archivo = &args[2];
+            if let Err(e) = cli_ejecutar(archivo) {
                 eprintln!("Error: {}", e);
                 std::process::exit(1);
             }
-        }
-        "repl" => {
-            cli::cli_repl();
-        }
+        },
+        "chequear" => {
+            if args.len() < 3 {
+                eprintln!("Uso: aguila chequear <archivo.ag>");
+                return;
+            }
+            let archivo = &args[2];
+            cli_chequear(archivo);
+        },
+        "compilar" => {
+            if args.len() < 3 {
+                eprintln!("Uso: aguila compilar <archivo.ag>");
+                return;
+            }
+            let archivo = &args[2];
+            if let Err(e) = cli_compilar(archivo) {
+                eprintln!("Error: {}", e);
+                std::process::exit(1);
+            } else {
+                println!("Compilación exitosa.");
+            }
+        },
+        "dev" => {
+            if args.len() < 3 {
+                eprintln!("Uso: aguila dev <archivo.ag>");
+                return;
+            }
+            let archivo = &args[2];
+            cli_dev(archivo);
+        },
         "--version" => {
             println!("aguila v{}", VERSION);
         }
@@ -61,6 +93,8 @@ fn mostrar_ayuda() {
     println!();
     println!("Comandos explícitos:");
     println!("  ejecutar <archivo.ag>    Ejecuta un archivo ÁGUILA");
+    println!("  compilar <archivo.ag>    Compila un archivo a JavaScript");
+    println!("  chequear <archivo.ag>    Analiza estáticamente un archivo");
     println!("  repl                     Inicia el intérprete interactivo");
     println!("  --version                Muestra la versión");
     println!("  --help, -h               Muestra esta ayuda");

@@ -1,0 +1,44 @@
+{
+    "name": "aguila-vscode",
+    "displayName": "ÁGUILA Language",
+    "description": "Soporte para el lenguaje de programación ÁGUILA",
+    "version": "0.1.1",
+    "publisher": "aguila-lang",
+    "engines": {
+        "vscode": "^1.70.0"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/emersonxinay/agila"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "icon": "icon.png",
+    "contributes": {
+        "languages": [
+            {
+                "id": "aguila",
+                "aliases": [
+                    "Aguila",
+                    "aguila"
+                ],
+                "extensions": [
+                    ".ag"
+                ],
+                "configuration": "./language-configuration.json",
+                "icon": {
+                    "light": "./icon.png",
+                    "dark": "./icon.png"
+                }
+            }
+        ],
+        "grammars": [
+            {
+                "language": "aguila",
+                "scopeName": "source.aguila",
+                "path": "./syntaxes/aguila.tmLanguage.json"
+            }
+        ]
+    }
+}

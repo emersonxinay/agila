@@ -1,0 +1,17 @@
+# pruebas/io/archivos.ag
+archivo = "prueba_io.txt"
+mensaje = "Hola desde ÁGUILA IO"
+
+imprimir "Escribiendo en: " + archivo
+fs.escribir(archivo, mensaje)
+
+imprimir "Leyendo archivo..."
+contenido = fs.leer(archivo)
+
+imprimir "Contenido leído: " + contenido
+
+si contenido == mensaje {
+    imprimir "¡ÉXITO! El contenido coincide."
+} sino {
+    imprimir "FALLO: El contenido no coincide."
+}

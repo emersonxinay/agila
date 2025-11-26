@@ -1,6 +1,38 @@
 use std::collections::HashMap;
 use std::rc::Rc;
 use std::cell::RefCell;
+use std::fmt;
+use postgres;
+
+#[derive(Clone)]
+pub struct NativeFn(pub Rc<dyn Fn(&[Value]) -> Result<Value, String>>);
+
+impl fmt::Debug for NativeFn {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "<función nativa>")
+    }
+}
+
+impl PartialEq for NativeFn {
+    fn eq(&self, _other: &Self) -> bool {
+        false
+    }
+}
+
+#[derive(Clone)]
+pub struct DbClient(pub Rc<RefCell<postgres::Client>>);
+
+impl fmt::Debug for DbClient {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "<conexión db>")
+    }
+}
+
+impl PartialEq for DbClient {
+    fn eq(&self, _other: &Self) -> bool {
+        false
+    }
+}
 
 #[derive(Debug, Clone)]
 pub enum Value {
@@ -10,9 +42,14 @@ pub enum Value {
     Lista(Rc<RefCell<Vec<Value>>>),
     Diccionario(Rc<RefCell<HashMap<String, Value>>>),
     Nulo,
-    Funcion(Vec<String>, Vec<crate::ast::Sentencia>, Rc<RefCell<HashMap<String, Value>>>),
-    Objeto(String, Rc<RefCell<HashMap<String, Value>>>),
-    Clase(String, Rc<RefCell<HashMap<String, Value>>>, Option<Box<Value>>),
+    Funcion(Vec<String>, Vec<crate::ast::Sentencia>, Rc<RefCell<HashMap<String, Value>>>, bool),
+    FuncionNativa(NativeFn),
+    Clase(String, Rc<RefCell<HashMap<String, Value>>>), // Nombre, Scope de clase (métodos)
+    Instancia {
+        clase: String,
+        atributos: Rc<RefCell<HashMap<String, Value>>>,
+    },
+    BaseDeDatos(DbClient),
 }
 
 impl Value {
@@ -41,9 +78,11 @@ impl Value {
                     .collect();
                 format!("{{{}}}", items.join(", "))
             }
-            Value::Funcion(_, _, _) => "<función>".to_string(),
-            Value::Objeto(clase, _) => format!("<instancia de {}>", clase),
-            Value::Clase(nombre, _, _) => format!("<clase {}>", nombre),
+            Value::Funcion(..) => "<función>".to_string(),
+            Value::FuncionNativa(_) => "<función nativa>".to_string(),
+            Value::Clase(nombre, _) => format!("<clase {}>", nombre),
+            Value::Instancia { clase, .. } => format!("<instancia de {}>", clase),
+            Value::BaseDeDatos(_) => "<conexión db>".to_string(),
         }
     }
 
@@ -66,7 +105,8 @@ impl PartialEq for Value {
             (Value::Numero(a), Value::Numero(b)) => a == b,
             (Value::Texto(a), Value::Texto(b)) => a == b,
             (Value::Logico(a), Value::Logico(b)) => a == b,
-            (Value::Nulo, Value::Nulo) => true,
+            (Value::Instancia { clase: c1, .. }, Value::Instancia { clase: c2, .. }) => c1 == c2,
+            (Value::BaseDeDatos(_), Value::BaseDeDatos(_)) => false, // No comparamos conexiones
             _ => false,
         }
     }

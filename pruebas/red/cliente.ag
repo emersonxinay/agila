@@ -1,0 +1,11 @@
+# pruebas/red/cliente.ag
+imprimir "Conectando a servidor..."
+cliente = red.conectar("127.0.0.1", 8081)
+
+imprimir "Conectado! Enviando mensaje..."
+cliente.escribir("Hola desde Cliente ÁGUILA")
+
+respuesta = cliente.leer()
+imprimir "Respuesta del servidor: " + respuesta
+
+cliente.cerrar()
