@@ -1,1 +1,27 @@
 GUIA_DISTRIBUCION.md
+
+# Rust
+aguila/target/
+**/*.rs.bk
+Cargo.lock
+
+# Node
+node_modules/
+npm/node_modules/
+*.log
+
+# VS Code
+.vscode/
+*.vsix
+
+# Temporales
+*.tmp
+*.swp
+.DS_Store
+historial.txt
+prueba_io.txt
+
+# Compilados
+*.js
+!npm/*.js
+!ejemplos/**/*.js
