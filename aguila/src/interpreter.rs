@@ -33,6 +33,44 @@ impl Interprete {
     fn registrar_funciones_nativas(&mut self) {
         let mut fs_metodos = HashMap::new();
 
+        // leer(mensaje_opcional)
+        if let Some(scope) = self.variables.first_mut() {
+            scope.borrow_mut().insert("leer".to_string(), Value::FuncionNativa(NativeFn(Rc::new(|args| {
+                // 1. Mostrar mensaje si existe
+                if let Some(msg) = args.get(0) {
+                    print!("{}", msg.a_texto());
+                    let _ = std::io::stdout().flush();
+                }
+
+                // 2. Leer entrada
+                let mut buffer = String::new();
+                match std::io::stdin().read_line(&mut buffer) {
+                    Ok(_) => {
+                        let input = buffer.trim();
+                        
+                        // 3. Inferencia de tipos
+                        
+                        // Booleano
+                        if input.eq_ignore_ascii_case("verdadero") {
+                            return Ok(Value::Logico(true));
+                        }
+                        if input.eq_ignore_ascii_case("falso") {
+                            return Ok(Value::Logico(false));
+                        }
+
+                        // Número
+                        if let Ok(num) = input.parse::<f64>() {
+                            return Ok(Value::Numero(num));
+                        }
+
+                        // Texto (por defecto)
+                        Ok(Value::Texto(input.to_string()))
+                    },
+                    Err(e) => Err(format!("Error al leer entrada: {}", e))
+                }
+            }))));
+        }
+
         // fs.leer(ruta)
         fs_metodos.insert("leer".to_string(), Value::FuncionNativa(NativeFn(Rc::new(|args| {
             if args.len() != 1 {
@@ -61,10 +99,50 @@ impl Interprete {
             };
 
             match std::fs::write(ruta, contenido) {
-                Ok(_) => Ok(Value::Logico(true)),
+                Ok(_) => Ok(Value::Nulo),
                 Err(e) => Err(format!("Error al escribir archivo: {}", e)),
             }
         }))));
+
+        // afirmar(condicion, mensaje_opcional)
+        if let Some(scope) = self.variables.first_mut() {
+            scope.borrow_mut().insert("afirmar".to_string(), Value::FuncionNativa(NativeFn(Rc::new(|args| {
+                if args.is_empty() {
+                    return Err("afirmar espera al menos 1 argumento (condicion)".to_string());
+                }
+                
+                let condicion = args[0].a_booleano();
+                if !condicion {
+                    let mensaje = if args.len() > 1 {
+                        args[1].a_texto()
+                    } else {
+                        "Afirmación fallida".to_string()
+                    };
+                    return Err(format!("Error de Aserción: {}", mensaje));
+                }
+                
+                Ok(Value::Nulo)
+            }))));
+        }
+
+        // conjunto(lista_opcional)
+        if let Some(scope) = self.variables.first_mut() {
+            scope.borrow_mut().insert("conjunto".to_string(), Value::FuncionNativa(NativeFn(Rc::new(|args| {
+                let mut set = std::collections::HashSet::new();
+                
+                if !args.is_empty() {
+                    if let Value::Lista(lista) = &args[0] {
+                        for item in lista.borrow().iter() {
+                            set.insert(item.clone());
+                        }
+                    } else {
+                        return Err("conjunto() espera una lista como argumento opcional".to_string());
+                    }
+                }
+                
+                Ok(Value::Conjunto(Rc::new(RefCell::new(set))))
+            }))));
+        }
 
         let fs_modulo = Value::Diccionario(Rc::new(RefCell::new(fs_metodos)));
         
@@ -580,6 +658,34 @@ impl Interprete {
 
                 Ok(None)
             }
+            Sentencia::Segun {
+                expresion,
+                casos,
+                defecto,
+            } => {
+                let valor_evaluado = self.evaluar_expresion(expresion)?;
+                let mut caso_encontrado = false;
+
+                for (caso_expr, bloque) in casos {
+                    let valor_caso = self.evaluar_expresion(caso_expr)?;
+                    if valor_evaluado == valor_caso {
+                        for sent in bloque {
+                            self.ejecutar_sentencia(sent)?;
+                        }
+                        caso_encontrado = true;
+                        break;
+                    }
+                }
+
+                if !caso_encontrado {
+                    if let Some(bloque_defecto) = defecto {
+                        for sent in bloque_defecto {
+                            self.ejecutar_sentencia(sent)?;
+                        }
+                    }
+                }
+                Ok(None)
+            }
             Sentencia::Retorno(expr_opt) => {
                 let val = if let Some(expr) = expr_opt {
                     self.evaluar_expresion(expr)?
@@ -633,6 +739,14 @@ impl Interprete {
             Expresion::Esperar(expr) => {
                 // En el intérprete síncrono, esperar simplemente evalúa la expresión
                 self.evaluar_expresion(expr)
+            }
+            Expresion::UnOp { op, der } => {
+                let val = self.evaluar_expresion(der)?;
+                match op.as_str() {
+                    "no" => Ok(Value::Logico(!val.a_logico())),
+                    "-" => Ok(Value::Numero(-val.a_numero())),
+                    _ => Err(format!("Operador unario desconocido: {}", op)),
+                }
             }
             Expresion::BinOp { izq, op, der } => {
                 self.evaluar_binop(izq, op, der)
@@ -716,20 +830,34 @@ impl Interprete {
                 (Value::Numero(a), Value::Numero(b)) => Ok(Value::Numero(a - b)),
                 _ => Err("Operación - no válida".to_string()),
             },
-            "*" => match (&izq_val, &der_val) {
-                (Value::Numero(a), Value::Numero(b)) => Ok(Value::Numero(a * b)),
-                _ => Err("Operación * no válida".to_string()),
-            },
-            "/" => match (&izq_val, &der_val) {
-                (Value::Numero(a), Value::Numero(b)) => {
-                    if *b == 0.0 {
-                        Err("Error: División por cero".to_string())
-                    } else {
-                        Ok(Value::Numero(a / b))
-                    }
+            "*" => Ok(Value::Numero(izq_val.a_numero() * der_val.a_numero())),
+            "/" => {
+                let den = der_val.a_numero();
+                if den == 0.0 {
+                    Err("División por cero".to_string())
+                } else {
+                    Ok(Value::Numero(izq_val.a_numero() / den))
                 }
-                _ => Err("Operación / no válida".to_string()),
-            },
+            }
+            "%" => {
+                let den = der_val.a_numero();
+                if den == 0.0 {
+                    Err("División por cero (módulo)".to_string())
+                } else {
+                    Ok(Value::Numero(izq_val.a_numero() % den))
+                }
+            }
+            "//" => {
+                let den = der_val.a_numero();
+                if den == 0.0 {
+                    Err("División por cero (división entera)".to_string())
+                } else {
+                    Ok(Value::Numero((izq_val.a_numero() / den).floor()))
+                }
+            }
+            "^" => Ok(Value::Numero(izq_val.a_numero().powf(der_val.a_numero()))),
+            "y" => Ok(Value::Logico(izq_val.a_logico() && der_val.a_logico())),
+            "o" => Ok(Value::Logico(izq_val.a_logico() || der_val.a_logico())),
             "==" => Ok(Value::Logico(izq_val == der_val)),
             "!=" => Ok(Value::Logico(izq_val != der_val)),
             ">" => match (&izq_val, &der_val) {
@@ -994,6 +1122,207 @@ impl Interprete {
                     _ => Err(format!("Método '{}' no definido para BaseDeDatos", metodo)),
                 }
             }
+            Value::Lista(lista_rc) => {
+                let mut lista = lista_rc.borrow_mut();
+                match metodo.as_str() {
+                    "agregar" => {
+                        if args.len() != 1 { return Err("agregar espera 1 argumento".to_string()); }
+                        lista.push(args[0].clone());
+                        Ok(Value::Nulo)
+                    }
+                    "eliminar" => {
+                        if args.len() != 1 { return Err("eliminar espera 1 argumento (indice)".to_string()); }
+                        let indice = args[0].a_numero() as usize;
+                        if indice < lista.len() {
+                            Ok(lista.remove(indice))
+                        } else {
+                            Err(format!("Índice fuera de rango: {}", indice))
+                        }
+                    }
+                    "longitud" => {
+                        Ok(Value::Numero(lista.len() as f64))
+                    }
+                    "insertar" => {
+                        if args.len() != 2 { return Err("insertar espera 2 argumentos (indice, valor)".to_string()); }
+                        let indice = args[0].a_numero() as usize;
+                        if indice <= lista.len() {
+                            lista.insert(indice, args[1].clone());
+                            Ok(Value::Nulo)
+                        } else {
+                            Err(format!("Índice fuera de rango: {}", indice))
+                        }
+                    }
+                    "contiene" => {
+                        if args.len() != 1 { return Err("contiene espera 1 argumento".to_string()); }
+                        let buscado = &args[0];
+                        let encontrado = lista.iter().any(|v| v == buscado); // Requiere PartialEq en Value
+                        Ok(Value::Logico(encontrado))
+                    }
+                    "ordenar" => {
+                        // Ordenamiento básico (solo números o textos por ahora)
+                        lista.sort_by(|a, b| {
+                            match (a, b) {
+                                (Value::Numero(n1), Value::Numero(n2)) => n1.partial_cmp(n2).unwrap_or(std::cmp::Ordering::Equal),
+                                (Value::Texto(s1), Value::Texto(s2)) => s1.cmp(s2),
+                                _ => std::cmp::Ordering::Equal,
+                            }
+                        });
+                        Ok(Value::Nulo)
+                    }
+                    "invertir" => {
+                        lista.reverse();
+                        Ok(Value::Nulo)
+                    }
+                    "limpiar" => {
+                        lista.clear();
+                        Ok(Value::Nulo)
+                    }
+                    "copiar" => {
+                        Ok(Value::Lista(Rc::new(RefCell::new(lista.clone()))))
+                    }
+                    "unir" => {
+                        if args.len() != 1 { return Err("unir espera 1 argumento (separador)".to_string()); }
+                        let sep = args[0].a_texto();
+                        let strs: Vec<String> = lista.iter().map(|v| v.a_texto()).collect();
+                        Ok(Value::Texto(strs.join(&sep)))
+                    }
+                    "sublista" => {
+                        if args.len() != 2 { return Err("sublista espera 2 argumentos (inicio, fin)".to_string()); }
+                        let inicio = args[0].a_numero() as usize;
+                        let fin = args[1].a_numero() as usize;
+                        if inicio <= fin && fin <= lista.len() {
+                            let sub = lista[inicio..fin].to_vec();
+                            Ok(Value::Lista(Rc::new(RefCell::new(sub))))
+                        } else {
+                            Err("Índices fuera de rango".to_string())
+                        }
+                    }
+                    _ => Err(format!("Método '{}' no definido para Lista", metodo)),
+                }
+            }
+            Value::Texto(s) => {
+                match metodo.as_str() {
+                    "longitud" => Ok(Value::Numero(s.chars().count() as f64)),
+                    "mayusculas" => Ok(Value::Texto(s.to_uppercase())),
+                    "minusculas" => Ok(Value::Texto(s.to_lowercase())),
+                    "contiene" => {
+                        if args.len() != 1 { return Err("contiene espera 1 argumento".to_string()); }
+                        let sub = args[0].a_texto();
+                        Ok(Value::Logico(s.contains(&sub)))
+                    }
+                    "reemplazar" => {
+                        if args.len() != 2 { return Err("reemplazar espera 2 argumentos (viejo, nuevo)".to_string()); }
+                        let viejo = args[0].a_texto();
+                        let nuevo = args[1].a_texto();
+                        Ok(Value::Texto(s.replace(&viejo, &nuevo)))
+                    }
+                    "dividir" => {
+                        if args.len() != 1 { return Err("dividir espera 1 argumento (separador)".to_string()); }
+                        let sep = args[0].a_texto();
+                        let partes: Vec<Value> = s.split(&sep).map(|p| Value::Texto(p.to_string())).collect();
+                        Ok(Value::Lista(Rc::new(RefCell::new(partes))))
+                    }
+                    "recortar" => Ok(Value::Texto(s.trim().to_string())),
+                    _ => Err(format!("Método '{}' no definido para Texto", metodo)),
+                }
+            }
+            Value::Diccionario(map_rc) => {
+                let mut map = map_rc.borrow_mut();
+                match metodo.as_str() {
+                    "claves" => {
+                        let claves: Vec<Value> = map.keys().map(|k| Value::Texto(k.clone())).collect();
+                        Ok(Value::Lista(Rc::new(RefCell::new(claves))))
+                    }
+                    "valores" => {
+                        let valores: Vec<Value> = map.values().cloned().collect();
+                        Ok(Value::Lista(Rc::new(RefCell::new(valores))))
+                    }
+                    "longitud" => Ok(Value::Numero(map.len() as f64)),
+                    "contiene" => {
+                        if args.len() != 1 { return Err("contiene espera 1 argumento (clave)".to_string()); }
+                        let clave = args[0].a_texto();
+                        Ok(Value::Logico(map.contains_key(&clave)))
+                    }
+                    "obtener" => {
+                        if args.len() < 1 { return Err("obtener espera al menos 1 argumento (clave)".to_string()); }
+                        let clave = args[0].a_texto();
+                        if let Some(val) = map.get(&clave) {
+                            Ok(val.clone())
+                        } else if args.len() > 1 {
+                            Ok(args[1].clone())
+                        } else {
+                            Ok(Value::Nulo)
+                        }
+                    }
+                    "eliminar" => {
+                        if args.len() != 1 { return Err("eliminar espera 1 argumento (clave)".to_string()); }
+                        let clave = args[0].a_texto();
+                        Ok(map.remove(&clave).unwrap_or(Value::Nulo))
+                    }
+                    "limpiar" => {
+                        map.clear();
+                        Ok(Value::Nulo)
+                    }
+                    "copiar" => {
+                        Ok(Value::Diccionario(Rc::new(RefCell::new(map.clone()))))
+                    }
+                    _ => Err(format!("Método '{}' no definido para Diccionario", metodo)),
+                }
+            }
+            Value::Conjunto(set_rc) => {
+                let mut set = set_rc.borrow_mut();
+                match metodo.as_str() {
+                    "agregar" => {
+                        if args.len() != 1 { return Err("agregar espera 1 argumento".to_string()); }
+                        set.insert(args[0].clone());
+                        Ok(Value::Nulo)
+                    }
+                    "eliminar" => {
+                        if args.len() != 1 { return Err("eliminar espera 1 argumento".to_string()); }
+                        Ok(Value::Logico(set.remove(&args[0])))
+                    }
+                    "contiene" => {
+                        if args.len() != 1 { return Err("contiene espera 1 argumento".to_string()); }
+                        Ok(Value::Logico(set.contains(&args[0])))
+                    }
+                    "longitud" => Ok(Value::Numero(set.len() as f64)),
+                    "a_lista" => {
+                        let lista: Vec<Value> = set.iter().cloned().collect();
+                        Ok(Value::Lista(Rc::new(RefCell::new(lista))))
+                    }
+                    "unir" => {
+                        if args.len() != 1 { return Err("unir espera 1 argumento (otro conjunto)".to_string()); }
+                        if let Value::Conjunto(otro_rc) = &args[0] {
+                             let otro = otro_rc.borrow();
+                             let union: std::collections::HashSet<_> = set.union(&otro).cloned().collect();
+                             Ok(Value::Conjunto(Rc::new(RefCell::new(union))))
+                        } else {
+                            Err("El argumento de unir debe ser un conjunto".to_string())
+                        }
+                    }
+                    "intersectar" => {
+                        if args.len() != 1 { return Err("intersectar espera 1 argumento (otro conjunto)".to_string()); }
+                        if let Value::Conjunto(otro_rc) = &args[0] {
+                             let otro = otro_rc.borrow();
+                             let inter: std::collections::HashSet<_> = set.intersection(&otro).cloned().collect();
+                             Ok(Value::Conjunto(Rc::new(RefCell::new(inter))))
+                        } else {
+                            Err("El argumento de intersectar debe ser un conjunto".to_string())
+                        }
+                    }
+                    "diferencia" => {
+                        if args.len() != 1 { return Err("diferencia espera 1 argumento (otro conjunto)".to_string()); }
+                        if let Value::Conjunto(otro_rc) = &args[0] {
+                             let otro = otro_rc.borrow();
+                             let diff: std::collections::HashSet<_> = set.difference(&otro).cloned().collect();
+                             Ok(Value::Conjunto(Rc::new(RefCell::new(diff))))
+                        } else {
+                            Err("El argumento de diferencia debe ser un conjunto".to_string())
+                        }
+                    }
+                    _ => Err(format!("Método '{}' no definido para Conjunto", metodo)),
+                }
+            }
             _ => Err(format!("No se puede llamar al método '{}' en este tipo de objeto", metodo)),
         }
     }
@@ -1028,7 +1357,10 @@ impl Interprete {
                         let resultado = self.ejecutar(programa);
                         self.variables.pop();
 
-                        return resultado.map(|opt| opt.unwrap_or(Value::Nulo));
+                        return match resultado {
+                            Ok(val_opt) => Ok(val_opt.unwrap_or(Value::Nulo)),
+                            Err(e) => Err(format!("{}\n  en {}.{}()", e, clase_nombre, metodo)),
+                        };
                     }
                 }
             }
@@ -1050,7 +1382,7 @@ impl Interprete {
                  }
             }
 
-            return Err(format!("Método '{}' no encontrado en clase '{}'", metodo, clase_nombre));
+            // Si no se encuentra en clase ni atributos, continuamos para intentar método nativo
         } else if let Value::Diccionario(map) = objeto {
             // Soporte para módulos (que son diccionarios de funciones)
             if let Some(val) = map.borrow().get(metodo) {
@@ -1067,10 +1399,9 @@ impl Interprete {
                     }
                     _ => return Err(format!("'{}' no es una función", metodo)),
                 }
-            } else {
-                return Err(format!("Método '{}' no encontrado en el módulo/diccionario", metodo));
             }
         }
+
         
         // Si no es instancia ni diccionario, intentar métodos nativos (listas, etc) o DB
         let mut valores_args = Vec::new();

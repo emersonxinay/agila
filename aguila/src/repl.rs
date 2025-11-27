@@ -1,66 +1,69 @@
-use rustyline::error::ReadlineError;
-use rustyline::DefaultEditor;
-use crate::interpreter::Interprete;
+use std::io::{self, Write};
 use crate::lexer::Lexer;
 use crate::parser::Parser;
+use crate::interpreter::Interprete;
 
 pub fn iniciar() {
-    println!("🦅 ÁGUILA v{}", env!("CARGO_PKG_VERSION"));
-    println!("Escribe 'salir' para terminar.");
-
-    let mut rl = DefaultEditor::new().unwrap();
-    if rl.load_history("historial.txt").is_err() {
-        // No hay historial previo
-    }
+    println!("ÁGUILA v{}", env!("CARGO_PKG_VERSION"));
+    println!("Escribe 'salir' para terminar, o 'ayuda' para ver comandos.");
 
     let mut interprete = Interprete::nuevo();
 
     loop {
-        let readline = rl.readline(">> ");
-        match readline {
-            Ok(line) => {
-                let input = line.trim();
-                if input == "salir" {
-                    break;
-                }
-                if input.is_empty() {
+        print!("> ");
+        if let Err(e) = io::stdout().flush() {
+            eprintln!("Error al flushear stdout: {}", e);
+            break;
+        }
+
+        let mut linea = String::new();
+        match io::stdin().read_line(&mut linea) {
+            Ok(_) => {
+                let linea = linea.trim();
+                if linea.is_empty() {
                     continue;
                 }
 
-                let _ = rl.add_history_entry(input);
-
-                let mut lexer = Lexer::nuevo(input);
-                let tokens = lexer.tokenizar();
-                
-                let mut parser = Parser::nuevo(tokens);
-                match parser.parsear() {
-                    Ok(programa) => {
-                        match interprete.ejecutar(programa) {
-                            Ok(Some(valor)) => {
-                                if valor != crate::types::Value::Nulo {
-                                    println!("{}", valor.a_texto());
-                                }
-                            },
-                            Ok(None) => {},
-                            Err(e) => eprintln!("Error de ejecución: {}", e),
-                        }
-                    },
-                    Err(e) => eprintln!("Error de sintaxis: {}", e),
+                match linea {
+                    "salir" => {
+                        println!("¡Hasta luego!");
+                        break;
+                    }
+                    "ayuda" => {
+                        println!("Comandos disponibles:");
+                        println!("  salir    - Termina la sesión");
+                        println!("  ayuda    - Muestra este mensaje");
+                        continue;
+                    }
+                    _ => {}
                 }
-            },
-            Err(ReadlineError::Interrupted) => {
-                println!("CTRL-C");
-                break;
-            },
-            Err(ReadlineError::Eof) => {
-                println!("CTRL-D");
-                break;
-            },
-            Err(err) => {
-                println!("Error: {:?}", err);
+
+                ejecutar_linea(&mut interprete, linea);
+            }
+            Err(e) => {
+                eprintln!("Error al leer entrada: {}", e);
                 break;
             }
         }
     }
-    let _ = rl.save_history("historial.txt");
+}
+
+fn ejecutar_linea(interprete: &mut Interprete, codigo: &str) {
+    let mut lexer = Lexer::nuevo(codigo);
+    let tokens = lexer.tokenizar();
+
+    let mut parser = Parser::nuevo(tokens);
+    match parser.parsear() {
+        Ok(programa) => {
+            match interprete.ejecutar(programa) {
+                Ok(val_opt) => {
+                    if let Some(val) = val_opt {
+                        println!("=> {}", val.a_texto());
+                    }
+                }
+                Err(e) => eprintln!("Error de ejecución: {}", e),
+            }
+        }
+        Err(e) => eprintln!("Error de sintaxis: {}", e),
+    }
 }

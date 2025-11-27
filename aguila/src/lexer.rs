@@ -169,11 +169,11 @@ impl Lexer {
                 continue;
             }
             
-            // Verificación anticipada de // para comentarios
-            if self.car_actual() == Some('/') && self.car_siguiente() == Some('/') {
-                self.omitir_resto_linea();
-                continue;
-            }
+            // Verificación anticipada de // para comentarios ELIMINADA para soportar división entera
+            // if self.car_actual() == Some('/') && self.car_siguiente() == Some('/') {
+            //     self.omitir_resto_linea();
+            //     continue;
+            // }
 
             break;
         }
@@ -182,13 +182,21 @@ impl Lexer {
             None => Token::EOF,
             Some('+') => {
                 self.avanzar();
-                Token::Mas
+                if self.car_actual() == Some('=') {
+                    self.avanzar();
+                    Token::MasIgual
+                } else {
+                    Token::Mas
+                }
             }
             Some('-') => {
                 self.avanzar();
                 if self.car_actual() == Some('>') {
                     self.avanzar();
                     Token::Flecha
+                } else if self.car_actual() == Some('=') {
+                    self.avanzar();
+                    Token::MenosIgual
                 } else {
                     Token::Menos
                 }
@@ -199,7 +207,20 @@ impl Lexer {
             }
             Some('/') => {
                 self.avanzar();
-                Token::Div
+                if self.car_actual() == Some('/') {
+                    self.avanzar();
+                    Token::DivEntera
+                } else {
+                    Token::Div
+                }
+            }
+            Some('%') => {
+                self.avanzar();
+                Token::Modulo
+            }
+            Some('^') => {
+                self.avanzar();
+                Token::Potencia
             }
             Some('(') => {
                 self.avanzar();
@@ -303,6 +324,12 @@ impl Lexer {
                         "nuevo" => Token::Nuevo,
                         "asincrono" => Token::Asincrono,
                         "esperar" => Token::Esperar,
+                        "segun" => Token::Segun,
+                        "caso" => Token::Caso,
+                        "defecto" => Token::Defecto,
+                        "y" => Token::Y,
+                        "o" => Token::O,
+                        "no" => Token::No,
                         _ => Token::Identificador(ident),
                     }
                 }

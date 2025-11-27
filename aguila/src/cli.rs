@@ -67,41 +67,6 @@ pub fn cli_compilar(archivo: &str) -> Result<(), String> {
     Ok(())
 }
 
-pub fn cli_repl() {
-    println!("ÁGUILA v{}", env!("CARGO_PKG_VERSION"));
-    println!("Escribe 'salir' para terminar");
-
-    let mut interprete = Interprete::nuevo();
-    loop {
-        print!("> ");
-        io::stdout().flush().unwrap();
-
-        let mut linea = String::new();
-        match io::stdin().read_line(&mut linea) {
-            Ok(_) => {
-                let linea = linea.trim();
-                if linea == "salir" {
-                    println!("¡Hasta luego!");
-                    break;
-                }
-
-                if linea.is_empty() {
-                    continue;
-                }
-
-                match ejecutar_en_repl(&mut interprete, linea) {
-                    Ok(_) => {}
-                    Err(e) => println!("Error: {}", e),
-                }
-            }
-            Err(e) => {
-                println!("Error: {}", e);
-                break;
-            }
-        }
-    }
-}
-
 pub fn ejecutar_codigo(codigo: &str) -> Result<(), String> {
     let mut lexer = Lexer::nuevo(codigo);
     let tokens = lexer.tokenizar();
@@ -111,20 +76,6 @@ pub fn ejecutar_codigo(codigo: &str) -> Result<(), String> {
 
     let mut interprete = Interprete::nuevo();
     let _ = interprete.ejecutar(programa)?;
-
-    Ok(())
-}
-
-fn ejecutar_en_repl(interprete: &mut Interprete, linea: &str) -> Result<(), String> {
-    let mut lexer = Lexer::nuevo(linea);
-    let tokens = lexer.tokenizar();
-
-    let mut parser = Parser::nuevo(tokens);
-    let programa = parser.parsear()?;
-
-    if let Some(val) = interprete.ejecutar(programa)? {
-        println!("{}", val.a_texto());
-    }
 
     Ok(())
 }

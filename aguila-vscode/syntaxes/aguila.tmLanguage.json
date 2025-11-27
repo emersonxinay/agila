@@ -1,15 +1,18 @@
 {
     "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
-    "name": "ÁGUILA",
+    "name": "Aguila",
     "patterns": [
+        {
+            "include": "#comments"
+        },
         {
             "include": "#keywords"
         },
         {
-            "include": "#strings"
+            "include": "#interpolated_strings"
         },
         {
-            "include": "#comments"
+            "include": "#strings"
         },
         {
             "include": "#functions"
@@ -19,6 +22,9 @@
         },
         {
             "include": "#types"
+        },
+        {
+            "include": "#operators"
         }
     ],
     "repository": {
@@ -26,7 +32,11 @@
             "patterns": [
                 {
                     "name": "keyword.control.aguila",
-                    "match": "\\b(si|sino|mientras|para|retornar|importar|asincrono|esperar|nuevo|intentar|capturar|clase|funcion)\\b"
+                    "match": "\\b(si|sino|mientras|para|en|hasta|retornar|importar|asincrono|esperar|nuevo|intentar|capturar|clase|funcion|segun|caso|defecto|imprimir)\\b"
+                },
+                {
+                    "name": "keyword.operator.logical.aguila",
+                    "match": "\\b(y|o|no)\\b"
                 },
                 {
                     "name": "constant.language.aguila",
@@ -49,16 +59,54 @@
                 }
             ]
         },
+        "interpolated_strings": {
+            "name": "string.quoted.double.interpolated.aguila",
+            "begin": "f\"",
+            "end": "\"",
+            "patterns": [
+                {
+                    "name": "constant.character.escape.aguila",
+                    "match": "\\\\."
+                },
+                {
+                    "begin": "\\$\\{",
+                    "beginCaptures": {
+                        "0": {
+                            "name": "punctuation.section.embedded.begin.aguila"
+                        }
+                    },
+                    "end": "\\}",
+                    "endCaptures": {
+                        "0": {
+                            "name": "punctuation.section.embedded.end.aguila"
+                        }
+                    },
+                    "patterns": [
+                        {
+                            "include": "$self"
+                        }
+                    ]
+                }
+            ]
+        },
         "comments": {
             "patterns": [
                 {
-                    "name": "comment.line.double-slash.aguila",
-                    "match": "//.*$"
+                    "name": "comment.line.number-sign.aguila",
+                    "match": "#.*$"
                 }
             ]
         },
         "functions": {
             "patterns": [
+                {
+                    "name": "support.function.builtin.aguila",
+                    "match": "\\b(leer|afirmar|conjunto)\\b"
+                },
+                {
+                    "name": "support.function.method.aguila",
+                    "match": "\\.(agregar|eliminar|insertar|longitud|contiene|ordenar|invertir|limpiar|copiar|unir|sublista|claves|valores|obtener|intersectar|diferencia|a_lista|mayusculas|minusculas|reemplazar|dividir|recortar|conectar|consulta|ejecutar|cerrar|parsear|stringificar|escribir|sin|cos|tan|sqrt|aleatorio)\\b"
+                },
                 {
                     "name": "entity.name.function.aguila",
                     "match": "\\b([a-zA-Z_][a-zA-Z0-9_]*)\\s*\\("
@@ -71,7 +119,27 @@
         },
         "types": {
             "name": "storage.type.aguila",
-            "match": "\\b(numero|texto|logico)\\b"
+            "match": "\\b(Numero|Texto|Logico|Lista|Diccionario|Conjunto)\\b"
+        },
+        "operators": {
+            "patterns": [
+                {
+                    "name": "keyword.operator.arithmetic.aguila",
+                    "match": "(\\+|\\-|\\*|/|//|%|\\^|\\+=|\\-=)"
+                },
+                {
+                    "name": "keyword.operator.comparison.aguila",
+                    "match": "(==|!=|>|<|>=|<=)"
+                },
+                {
+                    "name": "keyword.operator.assignment.aguila",
+                    "match": "(=)"
+                },
+                {
+                    "name": "keyword.operator.arrow.aguila",
+                    "match": "(->)"
+                }
+            ]
         }
     },
     "scopeName": "source.aguila"

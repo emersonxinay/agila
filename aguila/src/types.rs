@@ -1,7 +1,8 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 use std::cell::RefCell;
 use std::fmt;
+use std::hash::{Hash, Hasher};
 use postgres;
 
 #[derive(Clone)]
@@ -16,6 +17,17 @@ impl fmt::Debug for NativeFn {
 impl PartialEq for NativeFn {
     fn eq(&self, _other: &Self) -> bool {
         false
+    }
+}
+
+impl Eq for NativeFn {}
+
+impl Hash for NativeFn {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        // Las funciones nativas no son realmente hasheables por identidad fácilmente,
+        // usamos un valor constante o dirección si fuera posible.
+        // Por simplicidad, asumimos que no se usarán como claves frecuentemente o colisionarán.
+        (self.0.as_ref() as *const _ as *const () as usize).hash(state);
     }
 }
 
@@ -34,6 +46,14 @@ impl PartialEq for DbClient {
     }
 }
 
+impl Eq for DbClient {}
+
+impl Hash for DbClient {
+    fn hash<H: Hasher>(&self, _state: &mut H) {
+        // No hasheable realmente
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum Value {
     Numero(f64),
@@ -41,6 +61,7 @@ pub enum Value {
     Logico(bool),
     Lista(Rc<RefCell<Vec<Value>>>),
     Diccionario(Rc<RefCell<HashMap<String, Value>>>),
+    Conjunto(Rc<RefCell<HashSet<Value>>>),
     Nulo,
     Funcion(Vec<String>, Vec<crate::ast::Sentencia>, Rc<RefCell<HashMap<String, Value>>>, bool),
     FuncionNativa(NativeFn),
@@ -78,6 +99,11 @@ impl Value {
                     .collect();
                 format!("{{{}}}", items.join(", "))
             }
+            Value::Conjunto(set) => {
+                let set = set.borrow();
+                let strs: Vec<String> = set.iter().map(|v| v.a_texto()).collect();
+                format!("#{{{}}}", strs.join(", "))
+            }
             Value::Funcion(..) => "<función>".to_string(),
             Value::FuncionNativa(_) => "<función nativa>".to_string(),
             Value::Clase(nombre, _) => format!("<clase {}>", nombre),
@@ -94,7 +120,21 @@ impl Value {
             Value::Texto(s) => !s.is_empty(),
             Value::Lista(items) => !items.borrow().is_empty(),
             Value::Diccionario(map) => !map.borrow().is_empty(),
+            Value::Conjunto(set) => !set.borrow().is_empty(),
             _ => true,
+        }
+    }
+
+    pub fn a_logico(&self) -> bool {
+        self.a_booleano()
+    }
+
+    pub fn a_numero(&self) -> f64 {
+        match self {
+            Value::Numero(n) => *n,
+            Value::Texto(s) => s.parse().unwrap_or(0.0),
+            Value::Logico(b) => if *b { 1.0 } else { 0.0 },
+            _ => 0.0,
         }
     }
 }
@@ -102,12 +142,57 @@ impl Value {
 impl PartialEq for Value {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
-            (Value::Numero(a), Value::Numero(b)) => a == b,
+            (Value::Numero(a), Value::Numero(b)) => a == b, // Precaución con NaN
             (Value::Texto(a), Value::Texto(b)) => a == b,
             (Value::Logico(a), Value::Logico(b)) => a == b,
-            (Value::Instancia { clase: c1, .. }, Value::Instancia { clase: c2, .. }) => c1 == c2,
-            (Value::BaseDeDatos(_), Value::BaseDeDatos(_)) => false, // No comparamos conexiones
-            _ => false,
+            (Value::Nulo, Value::Nulo) => true,
+            (Value::Lista(a), Value::Lista(b)) => a == b, // Punteros iguales? No, contenido. Pero por ahora punteros o recursivo?
+                                                          // Para simplificar y evitar ciclos infinitos en comparaciones profundas,
+                                                          // Rust por defecto en Rc compara punteros. Si queremos valor, necesitamos deep eq.
+                                                          // Por ahora, asumamos igualdad de valor para primitivos y referencia para complejos
+                                                          // O mejor, igualdad estructural básica.
+                                                          // Dado que Value contiene Rc<RefCell<...>>, PartialEq derivado no funciona directo si no lo implementamos.
+                                                          // Aquí estamos implementando manualmente.
+                                                          // Para conjuntos necesitamos Eq completo.
+             // Implementación simplificada:
+             _ => false, 
+        }
+    }
+}
+
+impl Eq for Value {}
+
+impl Hash for Value {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        match self {
+            Value::Numero(n) => {
+                // Hack para hashear floats: usar representación en bits
+                // Nota: 0.0 y -0.0 deberían ser iguales, y NaN != NaN.
+                // Para uso simple en sets, esto suele bastar si evitamos NaNs.
+                let bits = n.to_bits();
+                bits.hash(state);
+            }
+            Value::Texto(s) => s.hash(state),
+            Value::Logico(b) => b.hash(state),
+            Value::Nulo => 0.hash(state),
+            Value::Lista(l) => {
+                // Hashear la dirección del Rc para identidad referencial
+                (l.as_ptr() as usize).hash(state);
+            },
+            Value::Diccionario(d) => {
+                (d.as_ptr() as usize).hash(state);
+            },
+            Value::Conjunto(s) => {
+                (s.as_ptr() as usize).hash(state);
+            },
+            Value::Funcion(_, _, _, _) => {
+                // Difícil hashear funciones, usamos discriminante
+                1.hash(state);
+            },
+            Value::FuncionNativa(f) => f.hash(state),
+            Value::Clase(nombre, _) => nombre.hash(state),
+            Value::Instancia { clase, .. } => clase.hash(state), // Podríamos hashear la identidad del objeto
+            Value::BaseDeDatos(db) => db.hash(state),
         }
     }
 }

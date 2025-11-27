@@ -29,14 +29,58 @@ impl Parser {
         token
     }
 
+    fn token_a_string(&self, token: &Token) -> String {
+        match token {
+            Token::Identificador(s) => format!("identificador '{}'", s),
+            Token::Numero(n) => format!("número {}", n),
+            Token::Texto(s) => format!("texto \"{}\"", s),
+            Token::LlaveAbre => "'{'".to_string(),
+            Token::LlaveCierra => "'}'".to_string(),
+            Token::ParAbre => "'('".to_string(),
+            Token::ParCierra => "')'".to_string(),
+            Token::CorcheteAbre => "'['".to_string(),
+            Token::CorcheteCierra => "']'".to_string(),
+            Token::Coma => "','".to_string(),
+            Token::DosPuntos => "':'".to_string(),
+            Token::Punto => "'.'".to_string(),
+            Token::Flecha => "'->'".to_string(),
+            Token::Asignacion => "'='".to_string(),
+            Token::Si => "'si'".to_string(),
+            Token::Sino => "'sino'".to_string(),
+            Token::Mientras => "'mientras'".to_string(),
+            Token::Para => "'para'".to_string(),
+            Token::Funcion => "'funcion'".to_string(),
+            Token::Retornar => "'retornar'".to_string(),
+            Token::Clase => "'clase'".to_string(),
+            Token::Importar => "'importar'".to_string(),
+            Token::EOF => "fin de archivo".to_string(),
+            _ => format!("{:?}", token),
+        }
+    }
+
     fn esperar(&mut self, esperado: Token) -> Result<(), String> {
         if self.token_actual() == &esperado {
             self.avanzar();
             Ok(())
         } else {
             Err(format!(
-                "Error de sintaxis: se esperaba {:?}, se encontró {:?}",
-                esperado, self.token_actual()
+                "Error de sintaxis: se esperaba {}, se encontró {}",
+                self.token_a_string(&esperado),
+                self.token_a_string(self.token_actual())
+            ))
+        }
+    }
+
+    fn esperar_con_contexto(&mut self, esperado: Token, contexto: &str) -> Result<(), String> {
+        if self.token_actual() == &esperado {
+            self.avanzar();
+            Ok(())
+        } else {
+            Err(format!(
+                "Error de sintaxis: se esperaba {} {}. Se encontró {}",
+                self.token_a_string(&esperado),
+                contexto,
+                self.token_a_string(self.token_actual())
             ))
         }
     }
@@ -53,6 +97,7 @@ impl Parser {
         match self.token_actual() {
             Token::Imprimir => self.parsear_imprimir(),
             Token::Si => self.parsear_si(),
+            Token::Segun => self.parsear_segun(),
             Token::Mientras => self.parsear_mientras(),
             Token::Para => self.parsear_para(),
             Token::Retornar => self.parsear_retornar(),
@@ -96,6 +141,36 @@ impl Parser {
                             nombre,
                             tipo: Some(tipo),
                             valor,
+                        })
+                    }
+                    Token::MasIgual => {
+                        self.avanzar();
+                        let valor = self.parsear_expresion()?;
+                        // Desazucarar: a += 1  =>  a = a + 1
+                        let expr_suma = Expresion::BinOp {
+                            izq: Box::new(Expresion::Identificador(nombre.clone())),
+                            op: "+".to_string(),
+                            der: Box::new(valor),
+                        };
+                        Ok(Sentencia::Asignacion {
+                            nombre,
+                            tipo: None,
+                            valor: expr_suma,
+                        })
+                    }
+                    Token::MenosIgual => {
+                        self.avanzar();
+                        let valor = self.parsear_expresion()?;
+                        // Desazucarar: a -= 1  =>  a = a - 1
+                        let expr_resta = Expresion::BinOp {
+                            izq: Box::new(Expresion::Identificador(nombre.clone())),
+                            op: "-".to_string(),
+                            der: Box::new(valor),
+                        };
+                        Ok(Sentencia::Asignacion {
+                            nombre,
+                            tipo: None,
+                            valor: expr_resta,
                         })
                     }
                     Token::Punto => {
@@ -184,21 +259,25 @@ impl Parser {
     }
 
     fn parsear_si(&mut self) -> Result<Sentencia, String> {
-        self.esperar(Token::Si)?;
+        self.avanzar(); // Consumir 'si'
         let condicion = self.parsear_expresion()?;
-        self.esperar(Token::LlaveAbre)?;
+        self.esperar_con_contexto(Token::LlaveAbre, "para iniciar el bloque 'si'")?;
         let si_bloque = self.parsear_bloque()?;
-        self.esperar(Token::LlaveCierra)?;
-
-        let sino_bloque = if self.token_actual() == &Token::Sino {
-            self.avanzar();
-            self.esperar(Token::LlaveAbre)?;
-            let bloque = self.parsear_bloque()?;
-            self.esperar(Token::LlaveCierra)?;
-            Some(bloque)
-        } else {
-            None
-        };
+        
+        let mut sino_bloque = None;
+        
+        // Manejo de 'sino si' y 'sino'
+        if self.token_actual() == &Token::Sino {
+            self.avanzar(); // Consumir 'sino'
+            if self.token_actual() == &Token::Si {
+                 // Es un 'sino si', lo tratamos recursivamente como otro 'si' dentro del 'sino'
+                 let sentencia_sino_si = self.parsear_si()?;
+                 sino_bloque = Some(vec![sentencia_sino_si]);
+            } else {
+                self.esperar_con_contexto(Token::LlaveAbre, "para iniciar el bloque 'sino'")?;
+                sino_bloque = Some(self.parsear_bloque()?);
+            }
+        }
 
         Ok(Sentencia::Si {
             condicion,
@@ -207,12 +286,49 @@ impl Parser {
         })
     }
 
-    fn parsear_mientras(&mut self) -> Result<Sentencia, String> {
-        self.esperar(Token::Mientras)?;
-        let condicion = self.parsear_expresion()?;
+    fn parsear_segun(&mut self) -> Result<Sentencia, String> {
+        self.esperar(Token::Segun)?;
+        let expresion = self.parsear_expresion()?;
         self.esperar(Token::LlaveAbre)?;
-        let bloque = self.parsear_bloque()?;
+
+        let mut casos = Vec::new();
+        let mut defecto = None;
+
+        while self.token_actual() != &Token::LlaveCierra && self.token_actual() != &Token::EOF {
+            if self.token_actual() == &Token::Caso {
+                self.avanzar();
+                let valor = self.parsear_expresion()?;
+                self.esperar(Token::LlaveAbre)?;
+                let bloque = self.parsear_bloque()?;
+                self.esperar(Token::LlaveCierra)?;
+                casos.push((valor, bloque));
+            } else if self.token_actual() == &Token::Defecto {
+                self.avanzar();
+                self.esperar(Token::LlaveAbre)?;
+                let bloque = self.parsear_bloque()?;
+                self.esperar(Token::LlaveCierra)?;
+                if defecto.is_some() {
+                    return Err("Múltiples bloques 'defecto' en 'según'".to_string());
+                }
+                defecto = Some(bloque);
+            } else {
+                return Err(format!("Se esperaba 'caso' o 'defecto', se encontró {:?}", self.token_actual()));
+            }
+        }
         self.esperar(Token::LlaveCierra)?;
+
+        Ok(Sentencia::Segun {
+            expresion,
+            casos,
+            defecto,
+        })
+    }
+
+    fn parsear_mientras(&mut self) -> Result<Sentencia, String> {
+        self.avanzar(); // Consumir 'mientras'
+        let condicion = self.parsear_expresion()?;
+        self.esperar_con_contexto(Token::LlaveAbre, "para iniciar el bloque 'mientras'")?;
+        let bloque = self.parsear_bloque()?;
         Ok(Sentencia::Mientras { condicion, bloque })
     }
 
@@ -271,57 +387,58 @@ impl Parser {
     }
 
     fn parsear_funcion(&mut self, es_asincrona: bool) -> Result<Sentencia, String> {
-        self.esperar(Token::Funcion)?;
-
+        self.avanzar(); // Consumir 'funcion'
         let nombre = if let Token::Identificador(n) = self.avanzar() {
             n
         } else {
-            return Err("Se esperaba nombre de función".to_string());
+            return Err("Se esperaba un nombre para la función".to_string());
         };
 
-        self.esperar(Token::ParAbre)?;
+        self.esperar_con_contexto(Token::ParAbre, "después del nombre de la función")?;
         let mut parametros = Vec::new();
-
-        while self.token_actual() != &Token::ParCierra {
-            if let Token::Identificador(param) = self.avanzar() {
-                let tipo = if self.token_actual() == &Token::DosPuntos {
-                    self.avanzar();
-                    if let Token::Identificador(t) = self.avanzar() {
-                        Some(t)
-                    } else {
-                        None
+        if self.token_actual() != &Token::ParCierra {
+            loop {
+                if let Token::Identificador(param) = self.avanzar() {
+                    let mut tipo_param = None;
+                    if self.token_actual() == &Token::DosPuntos {
+                        self.avanzar();
+                        if let Token::Identificador(t) = self.avanzar() {
+                            tipo_param = Some(t);
+                        } else {
+                            return Err("Se esperaba tipo de parámetro".to_string());
+                        }
                     }
+                    parametros.push((param, tipo_param));
                 } else {
-                    None
-                };
-                parametros.push((param, tipo));
+                    return Err("Se esperaba nombre de parámetro".to_string());
+                }
 
                 if self.token_actual() == &Token::Coma {
                     self.avanzar();
+                } else {
+                    break;
                 }
             }
         }
-        self.esperar(Token::ParCierra)?;
+        self.esperar_con_contexto(Token::ParCierra, "para cerrar los parámetros")?;
 
-        let retorno_tipo = if self.token_actual() == &Token::Flecha {
+        let mut tipo_retorno = None;
+        if self.token_actual() == &Token::Flecha {
             self.avanzar();
             if let Token::Identificador(t) = self.avanzar() {
-                Some(t)
+                tipo_retorno = Some(t);
             } else {
                 return Err("Se esperaba tipo de retorno después de '->'".to_string());
             }
-        } else {
-            None
-        };
+        }
 
-        self.esperar(Token::LlaveAbre)?;
+        self.esperar_con_contexto(Token::LlaveAbre, "para iniciar el cuerpo de la función")?;
         let bloque = self.parsear_bloque()?;
-        self.esperar(Token::LlaveCierra)?;
 
         Ok(Sentencia::Funcion {
             nombre,
             parametros,
-            retorno_tipo,
+            retorno_tipo: tipo_retorno,
             bloque,
             es_asincrona,
         })
@@ -435,7 +552,37 @@ impl Parser {
     }
 
     fn parsear_expresion(&mut self) -> Result<Expresion, String> {
-        self.parsear_comparacion()
+        self.parsear_logica_o()
+    }
+
+    fn parsear_logica_o(&mut self) -> Result<Expresion, String> {
+        let mut izq = self.parsear_logica_y()?;
+
+        while self.token_actual() == &Token::O {
+            self.avanzar();
+            let der = self.parsear_logica_y()?;
+            izq = Expresion::BinOp {
+                izq: Box::new(izq),
+                op: "o".to_string(),
+                der: Box::new(der),
+            };
+        }
+        Ok(izq)
+    }
+
+    fn parsear_logica_y(&mut self) -> Result<Expresion, String> {
+        let mut izq = self.parsear_comparacion()?;
+
+        while self.token_actual() == &Token::Y {
+            self.avanzar();
+            let der = self.parsear_comparacion()?;
+            izq = Expresion::BinOp {
+                izq: Box::new(izq),
+                op: "y".to_string(),
+                der: Box::new(der),
+            };
+        }
+        Ok(izq)
     }
 
     fn parsear_comparacion(&mut self) -> Result<Expresion, String> {
@@ -486,15 +633,17 @@ impl Parser {
     }
 
     fn parsear_multiplicacion(&mut self) -> Result<Expresion, String> {
-        let mut izq = self.parsear_unaria()?;
+        let mut izq = self.parsear_potencia()?;
 
-        while matches!(self.token_actual(), Token::Por | Token::Div) {
+        while matches!(self.token_actual(), Token::Por | Token::Div | Token::Modulo | Token::DivEntera) {
             let op = match self.avanzar() {
                 Token::Por => "*",
                 Token::Div => "/",
+                Token::Modulo => "%",
+                Token::DivEntera => "//",
                 _ => unreachable!(),
             };
-            let der = self.parsear_unaria()?;
+            let der = self.parsear_potencia()?;
             izq = Expresion::BinOp {
                 izq: Box::new(izq),
                 op: op.to_string(),
@@ -505,11 +654,33 @@ impl Parser {
         Ok(izq)
     }
 
+    fn parsear_potencia(&mut self) -> Result<Expresion, String> {
+        let mut izq = self.parsear_unaria()?;
+
+        while self.token_actual() == &Token::Potencia {
+            self.avanzar();
+            let der = self.parsear_unaria()?;
+            izq = Expresion::BinOp {
+                izq: Box::new(izq),
+                op: "^".to_string(),
+                der: Box::new(der),
+            };
+        }
+        Ok(izq)
+    }
+
     fn parsear_unaria(&mut self) -> Result<Expresion, String> {
         if self.token_actual() == &Token::Esperar {
             self.avanzar();
             let expr = self.parsear_unaria()?;
             Ok(Expresion::Esperar(Box::new(expr)))
+        } else if self.token_actual() == &Token::No {
+            self.avanzar();
+            let expr = self.parsear_unaria()?;
+            Ok(Expresion::UnOp {
+                op: "no".to_string(),
+                der: Box::new(expr),
+            })
         } else {
             self.parsear_primaria()
         }

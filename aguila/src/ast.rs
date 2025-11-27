@@ -26,6 +26,9 @@ pub enum Token {
     Nuevo,
     Asincrono,
     Esperar,
+    Segun,
+    Caso,
+    Defecto,
 
     // Operadores
     Mas,
@@ -44,6 +47,14 @@ pub enum Token {
     Coma,
     Dos,
     Flecha,
+    Modulo,
+    DivEntera,
+    Potencia,
+    MasIgual,
+    MenosIgual,
+    Y,
+    O,
+    No,
 
     // Delimitadores
     ParAbre,
@@ -109,6 +120,11 @@ pub enum Sentencia {
         bloque_capturar: Vec<Sentencia>,
     },
     Imprimir(Expresion),
+    Segun {
+        expresion: Expresion,
+        casos: Vec<(Expresion, Vec<Sentencia>)>,
+        defecto: Option<Vec<Sentencia>>,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -158,6 +174,10 @@ pub enum Expresion {
         es_asincrona: bool,
     },
     Esperar(Box<Expresion>),
+    UnOp {
+        op: String,
+        der: Box<Expresion>,
+    },
 }
 
 #[derive(Debug, Clone)]
