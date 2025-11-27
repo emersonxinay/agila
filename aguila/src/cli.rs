@@ -68,7 +68,7 @@ pub fn cli_compilar(archivo: &str) -> Result<(), String> {
 }
 
 pub fn cli_repl() {
-    println!("ÁGUILA v0.1.0");
+    println!("ÁGUILA v{}", env!("CARGO_PKG_VERSION"));
     println!("Escribe 'salir' para terminar");
 
     let mut interprete = Interprete::nuevo();

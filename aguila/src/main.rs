@@ -11,7 +11,7 @@ mod repl;
 use std::env;
 use cli::{cli_ejecutar, cli_chequear, cli_compilar, cli_dev};
 
-const VERSION: &str = "0.1.0";
+const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 fn main() {
     let args: Vec<String> = env::args().collect();

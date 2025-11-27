@@ -5,7 +5,7 @@ use crate::lexer::Lexer;
 use crate::parser::Parser;
 
 pub fn iniciar() {
-    println!("🦅 ÁGUILA v0.1.0");
+    println!("🦅 ÁGUILA v{}", env!("CARGO_PKG_VERSION"));
     println!("Escribe 'salir' para terminar.");
 
     let mut rl = DefaultEditor::new().unwrap();
