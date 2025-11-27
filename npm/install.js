@@ -4,23 +4,61 @@ const https = require('https');
 const { execSync } = require('child_process');
 
 // Configuración
-const REPO = 'emersonxinay/agila';
-const VERSION = 'v1.1.0'; // Debe coincidir con el tag de GitHub
+const REPO = 'emersonxinay/aguila';
 const BIN_NAME = process.platform === 'win32' ? 'aguila.exe' : 'aguila';
 
-// Detectar plataforma
-function getAssetUrl() {
+console.log('🦅 Detectando última versión de ÁGUILA...');
+
+// Obtener la última release desde GitHub API
+function getLatestRelease() {
+    return new Promise((resolve, reject) => {
+        const options = {
+            hostname: 'api.github.com',
+            path: `/repos/${REPO}/releases/latest`,
+            method: 'GET',
+            headers: {
+                'User-Agent': 'aguila-installer'
+            }
+        };
+
+        https.get(options, (res) => {
+            let data = '';
+
+            res.on('data', (chunk) => {
+                data += chunk;
+            });
+
+            res.on('end', () => {
+                if (res.statusCode === 200) {
+                    const release = JSON.parse(data);
+                    resolve(release);
+                } else {
+                    reject(new Error(`Error al obtener release: ${res.statusCode}`));
+                }
+            });
+        }).on('error', reject);
+    });
+}
+
+// Detectar asset correcto según plataforma
+function getAssetForPlatform(assets) {
     const platform = process.platform;
-    if (platform === 'win32') return `https://github.com/${REPO}/releases/download/${VERSION}/aguila-windows.exe`;
-    if (platform === 'darwin') return `https://github.com/${REPO}/releases/download/${VERSION}/aguila-macos`;
-    if (platform === 'linux') return `https://github.com/${REPO}/releases/download/${VERSION}/aguila-linux`;
-    throw new Error(`Plataforma no soportada: ${platform}`);
+    let assetName;
+
+    if (platform === 'win32') assetName = 'aguila-windows.exe';
+    else if (platform === 'darwin') assetName = 'aguila-macos';
+    else if (platform === 'linux') assetName = 'aguila-linux';
+    else throw new Error(`Plataforma no soportada: ${platform}`);
+
+    const asset = assets.find(a => a.name === assetName);
+    if (!asset) {
+        throw new Error(`No se encontró binario para ${platform}`);
+    }
+
+    return asset.browser_download_url;
 }
 
 const finalDest = path.join(__dirname, BIN_NAME);
-const initialUrl = getAssetUrl();
-
-console.log(`🦅 Instalando ÁGUILA para ${process.platform}...`);
 
 function download(url, dest) {
     return new Promise((resolve, reject) => {
@@ -56,7 +94,15 @@ function download(url, dest) {
     });
 }
 
-download(initialUrl, finalDest)
+// Proceso principal
+getLatestRelease()
+    .then((release) => {
+        console.log(`✨ Última versión: ${release.tag_name}`);
+        console.log(`📦 Instalando ÁGUILA para ${process.platform}...`);
+
+        const downloadUrl = getAssetForPlatform(release.assets);
+        return download(downloadUrl, finalDest);
+    })
     .then(() => {
         if (process.platform !== 'win32') {
             execSync(`chmod +x ${finalDest}`);
@@ -65,5 +111,6 @@ download(initialUrl, finalDest)
     })
     .catch((err) => {
         console.error(`❌ Error: ${err.message}`);
+        console.error('💡 Intenta instalar manualmente desde: https://github.com/emersonxinay/aguila/releases');
         process.exit(1);
     });
