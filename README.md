@@ -97,6 +97,27 @@ imprimir usuario.obtener("nombre")
 
 ---
 
+imprimir usuario.obtener("nombre")
+```
+
+---
+
+## 🧠 Potencia Algorítmica
+
+**¿Es Águila un "juguete"? Definitivamente NO.**
+
+Águila tiene **paridad lógica del 100% con Python**. Todo lo que puedes resolver en una entrevista técnica o en LeetCode con Python, puedes hacerlo en Águila.
+
+| Nivel | Conceptos | Estado en Águila |
+| :--- | :--- | :--- |
+| **Básico** | Bucles, Condicionales, Matemáticas | ✅ Idéntico a Python |
+| **Intermedio** | Listas, Diccionarios, Ordenamiento | ✅ Nativo y Optimizado |
+| **Avanzado** | Recursión, Backtracking, Grafos (BFS/DFS) | ✅ Soporte Completo (v2.4) |
+
+> **Dato:** Hemos verificado algoritmos complejos como *N-Queens*, *Sudoku Solver* y *Árboles Binarios* corriendo nativamente en Águila.
+
+---
+
 ## 🆚 Comparativa: Python vs Águila
 
 El mismo poder, en tu idioma.
