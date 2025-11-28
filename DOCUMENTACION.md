@@ -11,7 +11,7 @@ Para probar el lenguaje rápidamente, simplemente ejecuta el comando `aguila` en
 
 ```bash
 $ aguila
-ÁGUILA v2.1.2
+ÁGUILA v2.2.8
 Escribe 'salir' para terminar, o 'ayuda' para ver comandos.
 > imprimir "Hola"
 Hola
@@ -44,6 +44,8 @@ npm install -g aguila-lang
 
 ### Entrada de Datos
 Puedes solicitar información al usuario desde la consola usando la función `leer`. Esta función detecta automáticamente el tipo de dato ingresado (Número, Lógico o Texto).
+
+> **💡 Ejemplo Completo:** ¿Quieres ver una aplicación real? Revisa nuestro [Gestor de Tareas](../aguila/ejemplos/app_completa/) que incluye base de datos JSON, menús interactivos y POO.
 
 ```aguila
 nombre = leer("¿Cómo te llamas? ")

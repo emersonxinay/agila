@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    name: Test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: stable
+        override: true
+
+    - name: Build
+      run: cargo build --verbose
+      working-directory: aguila
+
+    - name: Run Unit Tests
+      run: cargo test --verbose
+      working-directory: aguila
+
+    - name: Run Integration Tests (Scripts)
+      shell: bash
+      run: |
+        # Compilar versión release para velocidad
+        cargo build --release
+        
+        # Definir ruta del binario
+        if [ "${{ matrix.os }}" == "windows-latest" ]; then
+          BIN="./target/release/aguila.exe"
+        else
+          BIN="./target/release/aguila"
+        fi
+        
+        # Ejecutar scripts de ejemplo críticos
+        echo "Ejecutando algoritmos_avanzados.ag..."
+        $BIN ejemplos/algoritmos_avanzados.ag
+        
+        echo "Ejecutando hola.ag..."
+        $BIN ejemplos/hola.ag
+      working-directory: aguila

@@ -176,7 +176,8 @@ El código generado es JavaScript ES6+ optimizado y listo para producción.
 
 - **Marketplace**: [Extensión VS Code](https://marketplace.visualstudio.com/items?itemName=aguila-lang.aguila-vscode)
 - **Repositorio**: [GitHub](https://github.com/emersonxinay/aguila)
-- **Documentación**: Ver carpeta `ejemplos/` para más casos de uso
+- **Documentación**: [DOCUMENTACION.md](DOCUMENTACION.md)
+- **Ejemplos**: Ver carpeta `aguila/ejemplos/`
 
 
 ---
