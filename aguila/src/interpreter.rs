@@ -835,7 +835,7 @@ impl Interprete {
         }
     }
 
-    fn evaluar_expresion(&mut self, expresion: &Expresion) -> Result<Value, String> {
+    pub fn evaluar_expresion(&mut self, expresion: &Expresion) -> Result<Value, String> {
         match expresion {
             Expresion::Numero(n) => Ok(Value::Numero(*n)),
             Expresion::Texto(s) => Ok(Value::Texto(s.clone())),

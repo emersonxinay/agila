@@ -61,7 +61,7 @@
         },
         "interpolated_strings": {
             "name": "string.quoted.double.interpolated.aguila",
-            "begin": "f\"",
+            "begin": "a\"",
             "end": "\"",
             "patterns": [
                 {
@@ -69,7 +69,7 @@
                     "match": "\\\\."
                 },
                 {
-                    "begin": "\\$\\{",
+                    "begin": "\\{",
                     "beginCaptures": {
                         "0": {
                             "name": "punctuation.section.embedded.begin.aguila"

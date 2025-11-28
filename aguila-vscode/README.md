@@ -9,7 +9,7 @@ Soporte oficial de VS Code para el lenguaje de programación **ÁGUILA**, un len
 - 📁 **Icono personalizado** para archivos ÁGUILA
 - 🔄 **Auto-cierre** de paréntesis, llaves y corchetes
 - 💬 **Comentarios** con `#`
-- 🌈 **Soporte para interpolación de strings** con `f"..."`
+- 🌈 **Soporte para interpolación de strings** con `a"..."`
 
 ## 📦 Instalación
 
@@ -27,35 +27,26 @@ Crea un archivo con extensión `.ag` y comienza a programar:
 # Hola Mundo
 imprimir "¡Hola, mundo!"
 
+# Interpolación (Nuevo en v0.4.3)
+nombre = "Águila"
+imprimir a"Hola, {nombre}"
+
 # Operadores aritméticos
-potencia = 2 ** 3  # 8 (nuevo en v2.2.1: ** en lugar de ^)
+potencia = 2 ** 3  # 8
 division_entera = 10 // 3  # 3
 
 # Estructuras de datos
 numeros = [1, 2, 3, 4, 5]
 numeros.agregar(6)
 imprimir numeros.longitud()  # 6
-
-# Conjuntos (nuevo en v2.2.0)
-s1 = conjunto([1, 2, 3])
-s2 = conjunto([3, 4, 5])
-union = s1.unir(s2)
-imprimir union  # #{1, 2, 3, 4, 5}
 ```
 
-## 🆕 Novedades en v2.2.8
+## 🆕 Novedades en v0.4.3
 
-- 🚀 **Soporte para Algoritmos Avanzados:** El lenguaje ahora es capaz de ejecutar algoritmos complejos como Quicksort, BFS y Fibonacci memoizado de manera eficiente.
-- 🛠️ **Nuevos Métodos Nativos:**
-    - `Lista.a_texto()`: Convierte una lista a su representación en texto.
-    - `Diccionario.insertar(clave, valor)`: Permite insertar o actualizar valores dinámicamente.
-- 🐛 **Correcciones Críticas:**
-    - Solucionado bug en el parser que afectaba bloques anidados (`si`, `mientras`, `funcion`).
-    - Estabilidad mejorada en el runtime para evitar errores de memoria en operaciones recursivas.
-- ✨ **Mejoras Previas:**
-    - Operador de potencia `**` (v2.2.1)
-    - Métodos numéricos: `.redondear()`, `.piso()`, `.techo()` (v2.2.4)
-    - REPL mejorado con historial y limpieza de pantalla (v2.2.2)
+- 🌈 **Interpolación de Cadenas:** Ahora usa el prefijo `a` y llaves `{}`. Ejemplo: `a"Hola {nombre}"`.
+- 🛑 **Snippet 'romper':** Soporte para la nueva palabra clave de control de flujo.
+- 🔧 **Correcciones de Snippets:** Arreglada la sintaxis de `segun` y añadidos `interp` e `impmod`.
+- 📚 **Sintaxis Actualizada:** Soporte para asignación por índice `lista[0] = x`.
 
 ## ⌨️ Snippets y Atajos
 
@@ -66,11 +57,15 @@ Escribe el prefijo y presiona Tab para expandir:
 - `si` → Condicional si
 - `sisi` → Si-sino
 - `para` → Bucle para-en
+- `pararango` → Bucle numérico (0 hasta N)
 - `mientras` → Bucle mientras
+- `romper` → Salir del bucle
 - `clase` → Clase con constructor
 - `try` → Intentar-capturar
 - `segun` → Switch/match
 - `imp` → imprimir
+- `interp` → Texto interpolado `a"..."`
+- `impmod` → Importar módulo
 - `dict` → Diccionario
 - `conjunto` → Conjunto
 
@@ -83,7 +78,7 @@ Escribe el prefijo y presiona Tab para expandir:
 ## 📚 Sintaxis Soportada
 
 ### Palabras Clave
-- **Control de flujo:** `si`, `sino`, `mientras`, `para`, `en`, `hasta`, `segun`, `caso`, `defecto`
+- **Control de flujo:** `si`, `sino`, `mientras`, `para`, `en`, `hasta`, `segun`, `caso`, `defecto`, `romper`
 - **Funciones:** `funcion`, `retornar`, `asincrono`, `esperar`
 - **Clases:** `clase`, `nuevo`, `this`
 - **Módulos:** `importar`
@@ -102,7 +97,7 @@ Escribe el prefijo y presiona Tab para expandir:
 ### Métodos Nativos
 
 **Listas:**
-`.agregar()`, `.eliminar()`, `.insertar()`, `.longitud()`, `.contiene()`, `.ordenar()`, `.invertir()`, `.limpiar()`, `.copiar()`, `.unir()`, `.sublista()`, `.a_texto()`
+`.agregar()`, `.eliminar()`, `.insertar()`, `.longitud()`, `.contiene()`, `.ordenar()`, `.invertir()`, `.limpiar()`, `.copiar()`, `.unir()`, `.sublista()`, `.a_texto()`, `.suma()`, `.minimo()`, `.maximo()`, `.promedio()`
 
 **Diccionarios:**
 `.claves()`, `.valores()`, `.longitud()`, `.contiene()`, `.obtener()`, `.eliminar()`, `.limpiar()`, `.copiar()`, `.insertar()`
@@ -112,6 +107,9 @@ Escribe el prefijo y presiona Tab para expandir:
 
 **Texto:**
 `.longitud()`, `.mayusculas()`, `.minusculas()`, `.contiene()`, `.reemplazar()`, `.dividir()`, `.recortar()`
+
+**Números:**
+`.abs()`, `.redondear()`, `.piso()`, `.techo()`
 
 ### Funciones Globales
 - `imprimir()` - Imprime en consola

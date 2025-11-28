@@ -3,6 +3,7 @@ use rustyline::DefaultEditor;
 use crate::lexer::Lexer;
 use crate::parser::Parser;
 use crate::interpreter::Interprete;
+use crate::ast::{Sentencia, Expresion};
 
 pub fn iniciar() {
     println!("🦅 ÁGUILA v{}", env!("CARGO_PKG_VERSION"));
@@ -146,14 +147,41 @@ fn ejecutar_linea(interprete: &mut Interprete, codigo: &str) {
 
     let mut parser = Parser::nuevo(tokens);
     match parser.parsear() {
-        Ok(programa) => {
-            match interprete.ejecutar(programa) {
-                Ok(val_opt) => {
-                    if let Some(val) = val_opt {
-                        println!("=> {}", val.a_texto());
+        Ok(mut programa) => {
+            // Verificar si la última sentencia es una expresión para imprimir su valor
+            let ultima_expresion = if let Some(last) = programa.sentencias.pop() {
+                match last {
+                    Sentencia::Expresion(expr) => Some(expr),
+                    _ => {
+                        programa.sentencias.push(last);
+                        None
                     }
                 }
-                Err(e) => eprintln!("❌ Error: {}", e),
+            } else {
+                None
+            };
+
+            // Ejecutar el resto del programa (o todo si no había expresión al final)
+            if !programa.sentencias.is_empty() {
+                match interprete.ejecutar(programa) {
+                    Ok(_) => {}, // Ignoramos el retorno normal de sentencias
+                    Err(e) => {
+                        eprintln!("❌ Error: {}", e);
+                        return;
+                    }
+                }
+            }
+
+            // Evaluar e imprimir la última expresión si existe
+            if let Some(expr) = ultima_expresion {
+                match interprete.evaluar_expresion(&expr) {
+                    Ok(val) => {
+                        // Solo imprimir si no es Nulo (opcional, pero común en REPLs)
+                        // Para 4+7 queremos ver el resultado.
+                        println!("=> {}", val.a_texto());
+                    }
+                    Err(e) => eprintln!("❌ Error: {}", e),
+                }
             }
         }
         Err(e) => eprintln!("❌ Sintaxis: {}", e),

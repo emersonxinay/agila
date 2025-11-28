@@ -37,6 +37,15 @@
         ],
         "description": "Bucle para-en"
     },
+    "Para Rango": {
+        "prefix": "pararango",
+        "body": [
+            "para ${1:i} = ${2:0} hasta ${3:10} {",
+            "\t$0",
+            "}"
+        ],
+        "description": "Bucle numérico"
+    },
     "Mientras": {
         "prefix": "mientras",
         "body": [
@@ -86,15 +95,28 @@
         "prefix": "segun",
         "body": [
             "segun ${1:valor} {",
-            "\tcaso ${2:opcion1}:",
+            "\tcaso ${2:opcion1} {",
             "\t\t$3",
-            "\tcaso ${4:opcion2}:",
+            "\t}",
+            "\tcaso ${4:opcion2} {",
             "\t\t$5",
-            "\tdefecto:",
+            "\t}",
+            "\tdefecto {",
             "\t\t$0",
+            "\t}",
             "}"
         ],
         "description": "Switch/match"
+    },
+    "Interpolación": {
+        "prefix": "interp",
+        "body": "a\"${1:Texto} {${2:variable}}\"",
+        "description": "Texto interpolado"
+    },
+    "Importar": {
+        "prefix": "impmod",
+        "body": "importar \"${1:./modulo.ag}\" como ${2:alias}",
+        "description": "Importar módulo"
     },
     "Imprimir": {
         "prefix": "imp",
