@@ -101,13 +101,18 @@ getLatestRelease()
         console.log(`📦 Instalando ÁGUILA para ${process.platform}...`);
 
         const downloadUrl = getAssetForPlatform(release.assets);
-        return download(downloadUrl, finalDest);
+        return download(downloadUrl, finalDest).then(() => release);
     })
-    .then(() => {
+    .then((release) => {
         if (process.platform !== 'win32') {
             execSync(`chmod +x ${finalDest}`);
         }
-        console.log('✅ Instalación completada.');
+        console.log('\n=============================================');
+        console.log(`🦅  ¡ÁGUILA SE HA ACTUALIZADO EXITOSAMENTE!`);
+        console.log(`✨  Versión instalada: ${release.tag_name}`);
+        console.log('=============================================');
+        console.log('👉  Ejecuta "aguila --version" para verificar.');
+        console.log('👉  Ejecuta "aguila --ayuda" para comenzar.\n');
     })
     .catch((err) => {
         console.error(`❌ Error: ${err.message}`);
