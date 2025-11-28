@@ -1,4 +1,4 @@
-# 🦅 Águila v2.4.0
+# 🦅 Águila 
 
 > **"La simplicidad de Python. La velocidad de Rust. Todo en Español."**
 
