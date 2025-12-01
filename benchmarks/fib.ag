@@ -6,11 +6,11 @@ funcion fib(n) {
 }
 
 inicio = reloj()
-resultado = fib(40)
+resultado = fib(30)
 fin = reloj()
 
 tiempo_segundos = fin - inicio
-imprimir("Águila: Fib(40) =")
+imprimir("Águila: Fib(30) =")
 imprimir(resultado)
 imprimir("Tiempo (segundos):")
 imprimir(tiempo_segundos)

@@ -18,6 +18,7 @@
 
 *   **100% en Español:** Escribe `si`, `mientras`, `funcion`. Tu código habla tu idioma.
 *   **Potencia Profesional:** No es un juguete. Es un lenguaje compilado capaz de ejecutar algoritmos complejos y aplicaciones reales.
+*   **Puente Universal:** Al aprender la lógica y sintaxis con Águila, **dominar luego lenguajes en inglés** (como Python o JavaScript) será mucho más rápido y natural, ya que los conceptos son idénticos.
 *   **Ecosistema Moderno:** Cuenta con su propio gestor de paquetes, extensión oficial para VS Code y herramientas de desarrollo de clase mundial.
 
 ---
@@ -117,6 +118,39 @@ El mismo poder, en tu idioma.
 *   🎓 **[Tutorial Paso a Paso](docs/tutorial.md):** Aprende desde cero con ejemplos.
 *   📘 **[Manual de Referencia](docs/manual.md):** Documentación técnica completa.
 *   🐍 **[Guía para Pythonistas](docs/vs_python.md):** Migra tus conocimientos.
+
+---
+
+## 🌟 Desbloqueando el Potencial de Hispanoamérica
+
+### El Problema
+El talento es universal, pero las oportunidades no. En Hispanoamérica, tenemos millones de mentes brillantes, creativas y emprendedoras. Sin embargo, existe una barrera invisible que frena nuestro crecimiento tecnológico: **el idioma**.
+
+Hoy, para aprender a programar, primero tienes que aprender inglés. Esto deja fuera a una inmensa mayoría de futuros innovadores.
+
+### La Solución: Águila
+Presentamos **Águila**, el primer lenguaje de programación de **grado profesional** diseñado nativamente en español.
+
+No es un juguete educativo. Águila es una herramienta de ingeniería seria. Combina la facilidad de aprendizaje de Python con una arquitectura híbrida capaz de compilar a binario nativo de alto rendimiento.
+
+### ¿Por qué Patrocinar?
+Al apoyar a Águila, inviertes en la **infraestructura educativa del futuro de Hispanoamérica**.
+
+1.  **Impacto Social Masivo:** Democratizamos el acceso a la economía digital para millones.
+2.  **Soberanía Tecnológica:** Creamos herramientas hechas por nosotros, para nosotros.
+3.  **Futuro Profesional:** La puerta de entrada para la próxima generación de desarrolladores.
+
+### 📢 Únete a la Revolución Global
+
+Buscamos aliados estratégicos para asegurar que Águila vuele alto y perdure:
+
+*   **🏢 Empresas e Inversionistas Globales:** Tanto del mundo hispano como del mercado angloparlante. Apostar por Águila es invertir en el crecimiento de su propio alcance, desbloqueando el potencial de 500 millones de futuros desarrolladores.
+*   **🌍 Comunidad Hispana:** Unamos fuerzas desde España hasta toda América Latina.
+*   **👨‍💻 Profesionales y Mentores:** Su apoyo es vital para garantizar la sostenibilidad técnica y económica a largo plazo. No dejemos que esto sea solo un intento; hagámoslo el estándar.
+
+Construyamos juntos un futuro tecnológico sin barreras.
+
+📩 **Hablemos de negocios y futuro:** [xinayespinoza@gmail.com](mailto:xinayespinoza@gmail.com)
 
 ---
 

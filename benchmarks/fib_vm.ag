@@ -7,6 +7,6 @@ funcion fib(n) {
     retornar r1 + r2
 }
 
-imprimir 111
+imprimir(111)
 imprimir fib(5)
 imprimir 999

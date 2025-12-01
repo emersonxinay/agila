@@ -1,9 +1,9 @@
 {
-    "name": "Aguila",
-    "displayName": "Aguila Language",
+    "name": "aguila-vscode",
+    "displayName": "Lenguaje Águila",
     "description": "Soporte para el lenguaje de programación Aguila",
     "version": "2.6.2",
-    "publisher": "emersonxinay",
+    "publisher": "aguila-lang",
     "author": {
         "name": "Emerson Espinoza",
         "url": "https://github.com/emersonxinay"

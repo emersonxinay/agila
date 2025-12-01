@@ -28,3 +28,4 @@ prueba_io.txt
 !npm/*.js
 !ejemplos/**/*.js
 debug_output_*.txt
+aguila/
