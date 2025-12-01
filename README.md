@@ -1,9 +1,12 @@
 # 🦅 Águila 
 
-> **"La simplicidad de Python. La velocidad de Rust. Todo en Español."**
+# Águila - El Primer Lenguaje de Programación Profesional de Latinoamérica 🦅
 
-<img src="aguila-vscode/icon.png" alt="Icono de Águila" width="100" height="100">
+![Logo Águila](https://raw.githubusercontent.com/emersonxinay/aguila/main/logo_aguila.svg)
 
+> **Creado por [Emerson Espinoza](https://github.com/emersonxinay)**
+
+**Águila** es un lenguaje de programación moderno, compilado y de alto rendimiento, diseñado desde cero en **Rust**. A diferencia de otros lenguajes educativos, Águila está construido para ser **profesional**, con un JIT Compiler, gestión de memoria avanzada y herramientas de producción.
 
 [![NPM Version](https://img.shields.io/npm/v/aguila-lang)](https://www.npmjs.com/package/aguila-lang)
 [![VS Code Extension](https://img.shields.io/visual-studio-marketplace/v/aguila-lang.aguila-vscode)](https://marketplace.visualstudio.com/items?itemName=aguila-lang.aguila-vscode)

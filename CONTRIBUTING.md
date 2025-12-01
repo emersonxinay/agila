@@ -2,6 +2,11 @@
 
 ¡Gracias por tu interés en contribuir a Águila!
 
+## 👑 Gobernanza
+
+Este proyecto fue fundado y es liderado por **[Emerson Espinoza](https://github.com/emersonxinay)**.
+Todas las decisiones de diseño del lenguaje (sintaxis, semántica, roadmap) son aprobadas finalmente por el fundador para mantener la visión de "Simplicidad y Potencia Profesional".
+
 ## 🛠️ Configuración del Entorno
 
 1.  **Instalar Rust:**
