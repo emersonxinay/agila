@@ -3,13 +3,17 @@
     "displayName": "Aguila Language",
     "description": "Soporte para el lenguaje de programación Aguila",
     "version": "2.6.1",
-    "publisher": "aguila-lang",
-    "engines": {
-        "vscode": "^1.70.0"
+    "publisher": "emersonxinay",
+    "author": {
+        "name": "Emerson Espinoza",
+        "url": "https://github.com/emersonxinay"
     },
     "repository": {
         "type": "git",
-        "url": "https://github.com/emersonxinay/aguila"
+        "url": "https://github.com/emersonxinay/aguila.git"
+    },
+    "engines": {
+        "vscode": "^1.70.0"
     },
     "categories": [
         "Programming Languages"
