@@ -124,6 +124,8 @@ El mismo poder, en tu idioma.
 
 El núcleo de Águila se desarrolla actualmente en un repositorio **privado** para mantener un ciclo de desarrollo ágil y controlado.
 
+**¡Águila es y siempre será 100% GRATIS para usar!**
+
 Sin embargo, ¡queremos construir esto contigo!
 *   **Futuro Open Source:** Tenemos planes de liberar el código gradualmente a medida que se estabilice.
 *   **Feedback:** Tu opinión es vital. Si tienes sugerencias o encuentras problemas en las versiones publicadas, por favor abre un Issue.
