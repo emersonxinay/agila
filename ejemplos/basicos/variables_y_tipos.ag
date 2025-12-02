@@ -1,0 +1,41 @@
+
+# Prueba de Fundamentos: Variables y Tipos
+
+imprimir("--- Iniciando Test de Fundamentos ---");
+
+# 1. Enteros y Operaciones
+a = 10;
+b = 5;
+imprimir(a"Suma (10+5): {a + b}");
+imprimir(a"Resta (10-5): {a - b}");
+imprimir(a"Multiplicación (10*5): {a * b}");
+imprimir(a"División (10/5): {a / b}");
+
+# 2. Flotantes
+pi = 3.14159;
+radio = 2.0;
+area = pi * (radio * radio);
+imprimir(a"Área círculo (r=2): {area}");
+
+# 3. Cadenas (Strings)
+nombre = "Águila";
+saludo = "Hola " + nombre;
+imprimir(saludo);
+
+# 4. Interpolación
+mensaje = a"Bienvenido a {nombre} v2.0";
+imprimir(mensaje);
+
+# 5. Booleanos
+es_verdadero = verdadero;
+es_falso = falso;
+
+si es_verdadero {
+    imprimir("Verdadero funciona");
+}
+
+si no es_falso {
+    imprimir("Negación funciona");
+}
+
+imprimir("--- Fin Test de Fundamentos ---");

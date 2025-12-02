@@ -1,0 +1,26 @@
+
+# Prueba de Importación
+
+imprimir("--- Iniciando Test de Importación ---");
+
+# 1. Importar módulo completo
+importar modulo_prueba;
+
+imprimir(modulo_prueba.saludar("Visitante"));
+imprimir("Variable exportada:");
+imprimir(modulo_prueba.variable_exportada);
+
+calc = modulo_prueba.Calculadora();
+imprimir("Suma desde clase importada:");
+imprimir(calc.sumar(10, 5));
+
+# 2. Importar selectivo (No soportado en MVP Bytecode aún)
+# desde modulo_prueba importar saludar;
+# imprimir(saludar("Directo"));
+
+# 3. Importar con alias
+importar modulo_prueba como mp;
+imprimir("Desde alias:");
+imprimir(mp.variable_exportada);
+
+imprimir("--- Fin Test de Importación ---");

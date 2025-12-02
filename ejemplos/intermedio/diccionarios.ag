@@ -1,0 +1,33 @@
+# Diccionarios en Águila - Guía Completa
+
+imprimir("=== DICCIONARIOS ===");
+
+# 1. Creación
+persona = {"nombre": "Ana", "edad": 25};
+imprimir(persona);
+
+# 2. Acceso
+imprimir(persona["nombre"]);
+
+# 3. Modificación
+persona["edad"] = 26;
+imprimir(persona["edad"]);
+
+# 4. Agregar
+persona["ciudad"] = "Santiago";
+imprimir(persona);
+
+# 5. Anidados
+config = {"app": "MiApp", "db": {"host": "localhost", "port": 5432}};
+imprimir(config["db"]["host"]);
+
+# 6. Tipos mixtos
+datos = {"texto": "Hola", "numero": 42, "bool": verdadero};
+imprimir(datos);
+
+# 7. Contador
+frutas = {"manzanas": 5, "naranjas": 3};
+frutas["manzanas"] = frutas["manzanas"] + 2;
+imprimir(frutas);
+
+imprimir("=== FIN ===");

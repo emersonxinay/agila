@@ -1,0 +1,35 @@
+
+# Prueba de Programación Orientada a Objetos
+
+imprimir("--- Iniciando Test de POO ---");
+
+# 1. Definición de Clase
+clase Animal {
+    funcion iniciar(nombre) {
+        este.nombre = nombre;
+    }
+
+    funcion hacer_sonido() {
+        imprimir(a"{este.nombre} hace un sonido genérico.");
+    }
+}
+
+# 2. Instanciación
+perro = Animal("Firulais");
+perro.hacer_sonido();
+
+# 3. Herencia
+clase Gato(Animal) {
+    funcion hacer_sonido() {
+        imprimir(a"{este.nombre} dice: ¡Miau!");
+    }
+}
+
+gato = Gato("Michi");
+gato.hacer_sonido();
+
+# 4. Atributos Dinámicos
+gato.edad = 3;
+imprimir(a"Edad del gato: {gato.edad}");
+
+imprimir("--- Fin Test de POO ---");

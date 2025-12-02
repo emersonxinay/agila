@@ -1,0 +1,41 @@
+
+# Prueba de Módulo Matemático
+
+imprimir("--- Iniciando Test de Mate ---");
+
+importar mate;
+
+# 1. Raíz Cuadrada
+raiz_25 = mate.raiz(25);
+imprimir(a"Raíz de 25: {raiz_25}");
+
+# 2. Potencia
+potencia_2_3 = mate.potencia(2, 3);
+imprimir(a"2 elevado a 3: {potencia_2_3}");
+
+# 3. Trigonometría
+# Seno de PI/2 (aprox 1.5708) debe ser 1
+# Coseno de 0 debe ser 1
+seno_1 = mate.sen(1.570796);
+cos_0 = mate.cos(0);
+imprimir(a"Seno(PI/2): {seno_1}");
+imprimir(a"Coseno(0): {cos_0}");
+
+# 4. Redondeo
+piso_val = mate.piso(4.9);
+techo_val = mate.techo(4.1);
+imprimir(a"Piso(4.9): {piso_val}");
+imprimir(a"Techo(4.1): {techo_val}");
+
+# 5. Aleatorio
+rand1 = mate.aleatorio();
+rand2 = mate.aleatorio();
+imprimir(a"Aleatorio 1: {rand1}");
+imprimir(a"Aleatorio 2: {rand2}");
+
+# 6. Rango (si está implementado como función que retorna lista)
+# mate.rango(inicio, fin)
+lista_rango = mate.rango(1, 5);
+imprimir(a"Rango(1, 5): {lista_rango}");
+
+imprimir("--- Fin Test de Mate ---");

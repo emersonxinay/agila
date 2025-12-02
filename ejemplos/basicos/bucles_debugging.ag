@@ -1,0 +1,3 @@
+para i = 1 hasta 10 {
+    imprime(a"Contando: {i}")
+}

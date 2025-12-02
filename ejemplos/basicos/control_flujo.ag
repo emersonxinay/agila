@@ -1,0 +1,47 @@
+
+# Prueba de Control de Flujo
+
+imprimir("--- Iniciando Test de Flujo ---");
+
+# 1. Condicional Si / Sino
+x = 10;
+si x > 5 {
+    imprimir("x es mayor que 5 (Correcto)");
+} sino {
+    imprimir("ERROR: x no debería ser menor o igual a 5");
+}
+
+# 2. Bucle Mientras
+contador = 0;
+imprimir("Contando con mientras:");
+mientras contador < 3 {
+    imprimir(a"  Contador: {contador}");
+    contador = contador + 1;
+}
+
+# 3. Bucle Para (Iterador)
+imprimir("Iterando lista:");
+lista = [1, 2, 3];
+para num en lista {
+    imprimir(a"  Num: {num}");
+}
+
+# 4. Bucle Para (Rango Clásico)
+imprimir("Bucle rango clásico (1 hasta 5):");
+para i = 1 hasta 5 {
+    imprimir(a"  i: {i}");
+}
+
+# 5. Romper y Continuar
+imprimir("Probando romper/continuar:");
+para i = 1 hasta 10 {
+    si i == 2 {
+        # continuar; # No soportado en MVP
+    }
+    si i == 5 {
+        # romper; # Parar en 5 (no imprimir 5)
+    }
+    imprimir(a"  Val: {i}");
+}
+
+imprimir("--- Fin Test de Flujo ---");

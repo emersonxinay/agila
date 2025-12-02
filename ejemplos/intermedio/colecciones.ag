@@ -1,0 +1,59 @@
+
+# Prueba de Colecciones (Listas y Diccionarios)
+
+imprimir("--- Iniciando Test de Colecciones ---");
+
+# 1. Listas
+imprimir("1. Listas");
+lista = [10, 20, 30];
+imprimir(a"Lista inicial: {lista}");
+
+# Agregar
+lista.agregar(40);
+imprimir(a"Después de agregar 40: {lista}");
+
+# Longitud
+len = lista.longitud();
+imprimir(a"Longitud: {len}");
+
+# Invertir
+lista.invertir();
+imprimir(a"Invertida: {lista}");
+
+# Eliminar (índice 0, que ahora es 40)
+eliminado = lista.eliminar(0);
+imprimir(a"Eliminado elemento en índice 0: {eliminado}");
+imprimir(a"Lista actual: {lista}");
+
+# Unir
+lista_str = ["Hola", "Mundo"];
+unido = lista_str.unir(" ");
+imprimir(a"Unido: '{unido}'");
+
+# Limpiar
+lista.limpiar();
+imprimir(a"Limpia: {lista}");
+
+
+# 2. Diccionarios
+imprimir("\n2. Diccionarios");
+dict = {
+    "nombre": "Águila",
+    "version": 1.0
+};
+imprimir(a"Diccionario inicial: {dict}");
+
+# Acceso
+imprimir(a"Nombre: {dict['nombre']}");
+
+# Asignación
+dict["autor"] = "Emerson";
+imprimir(a"Con autor: {dict}");
+
+# Modificación
+dict["version"] = 2.0;
+imprimir(a"Versión actualizada: {dict['version']}");
+
+# Nota: Métodos como claves() o valores() no están implementados aún en stdlib.
+
+imprimir("--- Fin Test de Colecciones ---");

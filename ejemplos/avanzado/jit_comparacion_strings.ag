@@ -1,0 +1,33 @@
+
+funcion test_jit() {
+    imprimir("Iniciando prueba JIT...");
+    para i = 0 hasta 200 {
+        si i == 150 {
+            imprimir("Iteración JIT activa (probablemente)");
+        }
+        
+        si "hola" == "hola" {
+            imprimir("OK");
+        }
+        
+        si "hola" == "mundo" {
+            imprimir("FALLO: 'hola' == 'mundo'");
+            retornar;
+        }
+        
+        a = "test";
+        b = "test";
+        si a == b {
+            imprimir("OK");
+        }
+        
+        c = "otro";
+        si a == c {
+            imprimir("FALLO: a == c");
+            retornar;
+        }
+    }
+    imprimir("Prueba JIT finalizada con ÉXITO");
+}
+
+test_jit();

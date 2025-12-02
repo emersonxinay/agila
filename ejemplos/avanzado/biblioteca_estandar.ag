@@ -1,0 +1,50 @@
+
+# Prueba de Biblioteca Estándar (Texto y Archivo)
+
+imprimir("--- Iniciando Test de Stdlib ---");
+
+# 1. Texto
+imprimir("1. Texto");
+texto = "  Hola Mundo  ";
+
+# Recortar
+trim = texto.recortar();
+imprimir("Recortado: '" + trim + "'");
+
+# Mayúsculas / Minúsculas
+mayus = trim.mayusculas();
+minus = trim.minusculas();
+imprimir("Mayúsculas: " + mayus);
+imprimir("Minúsculas: " + minus);
+
+# Contiene
+tiene_hola = trim.contiene("Hola");
+imprimir("¿Contiene 'Hola'?:");
+imprimir(tiene_hola);
+
+# Reemplazar
+reemplazo = trim.reemplazar("Mundo", "Águila");
+imprimir("Reemplazo: " + reemplazo);
+
+# Dividir
+partes = "a,b,c".dividir(",");
+# imprimir("Dividido: " + partes); # Concatenar lista con string puede fallar si no hay toString implícito
+
+# 2. Archivo
+imprimir("\n2. Archivo");
+importar archivo;
+
+ruta = "prueba_fs.txt";
+contenido_escribir = "Este es un archivo de prueba.\nSegunda línea.";
+
+# Escribir
+imprimir("Escribiendo en '" + ruta + "'...");
+archivo.escribir(ruta, contenido_escribir);
+
+# Leer
+imprimir("Leyendo archivo...");
+contenido_leido = archivo.leer(ruta);
+imprimir("Contenido leído:");
+imprimir(contenido_leido);
+
+imprimir("--- Fin Test de Stdlib ---");

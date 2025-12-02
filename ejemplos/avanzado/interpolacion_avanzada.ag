@@ -1,0 +1,36 @@
+# Pruebas de Interpolación - Casos Borde y Variables
+
+# 1. Interpolación vacía
+vacio = a""
+si vacio == "" { imprimir("PASS: Vacio") } sino { imprimir("FAIL: Vacio") }
+
+# 2. Solo expresiones literales
+solo_expr = a"{1}"
+si solo_expr == "1" { imprimir("PASS: Solo expr") } sino { imprimir("FAIL: Solo expr") }
+
+# 3. Múltiples expresiones literales
+multi = a"{1} y {2}"
+si multi == "1 y 2" { imprimir("PASS: Multi") } sino { imprimir("FAIL: Multi") }
+
+# 4. Tipos variados (literales)
+variados = a"{verdadero} {nulo}"
+si variados == "verdadero nulo" { imprimir("PASS: Variados") } sino { imprimir("FAIL: Variados") }
+
+# 5. Variables desde fuera
+x = 10;
+val_y = 20;
+nombre = "Águila";
+# Lista aun no tiene formato bonito en texto(), usa Debug
+lista = [x, val_y];
+
+msg = a"Variables: x={x}, y={val_y}";
+si msg == "Variables: x=10, y=20" { imprimir("PASS: Variables"); } sino { imprimir("FAIL: Variables"); }
+
+saludo = a"Hola {nombre}!";
+si saludo == "Hola Águila!" { imprimir("PASS: Saludo"); } sino { imprimir("FAIL: Saludo"); }
+
+# 6. Expresiones complejas
+suma = a"Suma: {x + val_y}";
+si suma == "Suma: 30" { imprimir("PASS: Suma"); } sino { imprimir("FAIL: Suma"); }
+
+imprimir("FIN PRUEBAS")

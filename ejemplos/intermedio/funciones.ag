@@ -1,0 +1,35 @@
+
+# Prueba de Funciones
+
+imprimir("--- Iniciando Test de Funciones ---");
+
+# 1. Función Simple
+funcion saludar(nombre) {
+    retornar "Hola, " + nombre;
+}
+imprimir(saludar("Usuario"));
+
+# 2. Función con Múltiples Argumentos
+funcion sumar(a, b) {
+    retornar a + b;
+}
+res = sumar(10, 20);
+imprimir(a"Suma(10, 20) = {res}");
+
+# 3. Recursión (Factorial)
+funcion factorial(n) {
+    si n <= 1 {
+        retornar 1;
+    }
+    retornar n * factorial(n - 1);
+}
+imprimir(a"Factorial de 5: {factorial(5)}");
+
+# 4. Funciones de Orden Superior (Closures/Lambdas no explícitas pero funciones como valor)
+funcion operar(a, b, operacion) {
+    retornar operacion(a, b);
+}
+res_op = operar(5, 5, sumar);
+imprimir(a"Operar(5, 5, sumar) = {res_op}");
+
+imprimir("--- Fin Test de Funciones ---");

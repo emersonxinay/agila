@@ -1,0 +1,19 @@
+
+# Prueba de Fibonacci Recursivo
+
+funcion fib(n) {
+    si (n < 2) {
+        retornar n;
+    }
+    retornar fib(n - 1) + fib(n - 2);
+}
+
+imprimir("Calculando Fibonacci de 30...");
+
+inicio = reloj();
+resultado = fib(30);
+fin = reloj();
+
+imprimir(a"Resultado: {resultado}");
+duracion = fin - inicio;
+imprimir(a"Tiempo: {duracion} segundos");

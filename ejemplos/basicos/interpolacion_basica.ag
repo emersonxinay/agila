@@ -1,0 +1,8 @@
+nombre = "Mundo"
+saludo = a"Hola {nombre}!"
+imprimir("Saludo interpolado: " + saludo)
+si saludo == "Hola Mundo!" {
+    imprimir("PASS")
+} sino {
+    imprimir("FAIL: Esperado 'Hola Mundo!', obtenido '" + saludo + "'")
+}
