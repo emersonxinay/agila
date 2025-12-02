@@ -1,0 +1,14 @@
+
+# Módulo de prueba para importación
+
+funcion saludar(nombre) {
+    retornar "Hola desde modulo, " + nombre;
+}
+
+clase Calculadora {
+    funcion sumar(a, b) {
+        retornar a + b;
+    }
+}
+
+variable_exportada = 42;
