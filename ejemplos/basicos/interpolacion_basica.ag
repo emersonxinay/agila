@@ -1,4 +1,4 @@
-nombre = "Mundo"
+nombre = leer("Ingrese nombre (Mundo): ")
 saludo = a"Hola {nombre}!"
 imprimir("Saludo interpolado: " + saludo)
 si saludo == "Hola Mundo!" {

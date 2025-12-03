@@ -3,18 +3,22 @@
 imprimir("=== DICCIONARIOS ===");
 
 # 1. Creación
-persona = {"nombre": "Ana", "edad": 25};
+nombre = leer("Nombre (Ana): ");
+edad = leer("Edad (25): ");
+persona = {"nombre": nombre, "edad": edad};
 imprimir(persona);
 
 # 2. Acceso
 imprimir(persona["nombre"]);
 
 # 3. Modificación
-persona["edad"] = 26;
+edad_nueva = leer("Nueva edad (26): ");
+persona["edad"] = edad_nueva;
 imprimir(persona["edad"]);
 
 # 4. Agregar
-persona["ciudad"] = "Santiago";
+ciudad = leer("Ciudad (Santiago): ");
+persona["ciudad"] = ciudad;
 imprimir(persona);
 
 # 5. Anidados

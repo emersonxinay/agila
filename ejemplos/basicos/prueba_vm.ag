@@ -1,2 +1,7 @@
-imprimir(10 + 20);
-imprimir(100 - 50 + 5);
+a = leer("a: ");
+b = leer("b: ");
+imprimir(a + b);
+c = leer("c: ");
+d = leer("d: ");
+e = leer("e: ");
+imprimir(c - d + e);

@@ -15,7 +15,8 @@ clase Animal {
 }
 
 # 2. Instanciación
-perro = Animal("Firulais");
+nombre_perro = leer("Nombre perro (Firulais): ");
+perro = Animal(nombre_perro);
 perro.hacer_sonido();
 
 # 3. Herencia
@@ -25,11 +26,13 @@ clase Gato(Animal) {
     }
 }
 
-gato = Gato("Michi");
+nombre_gato = leer("Nombre gato (Michi): ");
+gato = Gato(nombre_gato);
 gato.hacer_sonido();
 
 # 4. Atributos Dinámicos
-gato.edad = 3;
+edad_gato = leer("Edad gato (3): ");
+gato.edad = edad_gato;
 imprimir(a"Edad del gato: {gato.edad}");
 
 imprimir("--- Fin Test de POO ---");

@@ -7,14 +7,17 @@ imprimir("--- Iniciando Test de Funciones ---");
 funcion saludar(nombre) {
     retornar "Hola, " + nombre;
 }
-imprimir(saludar("Usuario"));
+nombre = leer("Ingrese nombre (Usuario): ");
+imprimir(saludar(nombre));
 
 # 2. Función con Múltiples Argumentos
 funcion sumar(a, b) {
     retornar a + b;
 }
-res = sumar(10, 20);
-imprimir(a"Suma(10, 20) = {res}");
+a = leer("Ingrese a (10): ");
+b = leer("Ingrese b (20): ");
+res = sumar(a, b);
+imprimir(a"Suma({a}, {b}) = {res}");
 
 # 3. Recursión (Factorial)
 funcion factorial(n) {
@@ -23,13 +26,16 @@ funcion factorial(n) {
     }
     retornar n * factorial(n - 1);
 }
-imprimir(a"Factorial de 5: {factorial(5)}");
+n = leer("Ingrese n para factorial (5): ");
+imprimir(a"Factorial de {n}: {factorial(n)}");
 
 # 4. Funciones de Orden Superior (Closures/Lambdas no explícitas pero funciones como valor)
 funcion operar(a, b, operacion) {
     retornar operacion(a, b);
 }
-res_op = operar(5, 5, sumar);
-imprimir(a"Operar(5, 5, sumar) = {res_op}");
+op_a = leer("Ingrese op_a (5): ");
+op_b = leer("Ingrese op_b (5): ");
+res_op = operar(op_a, op_b, sumar);
+imprimir(a"Operar({op_a}, {op_b}, sumar) = {res_op}");
 
 imprimir("--- Fin Test de Funciones ---");

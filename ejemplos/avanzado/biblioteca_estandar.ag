@@ -5,7 +5,7 @@ imprimir("--- Iniciando Test de Stdlib ---");
 
 # 1. Texto
 imprimir("1. Texto");
-texto = "  Hola Mundo  ";
+texto = leer("Texto (  Hola Mundo  ): ");
 
 # Recortar
 trim = texto.recortar();
@@ -18,24 +18,29 @@ imprimir("Mayúsculas: " + mayus);
 imprimir("Minúsculas: " + minus);
 
 # Contiene
-tiene_hola = trim.contiene("Hola");
-imprimir("¿Contiene 'Hola'?:");
-imprimir(tiene_hola);
+buscar = leer("Buscar (Hola): ");
+tiene_texto = trim.contiene(buscar);
+imprimir("¿Contiene '" + buscar + "'?:");
+imprimir(tiene_texto);
 
 # Reemplazar
-reemplazo = trim.reemplazar("Mundo", "Águila");
+reemplazar_old = leer("Reemplazar old (Mundo): ");
+reemplazar_new = leer("Reemplazar new (Águila): ");
+reemplazo = trim.reemplazar(reemplazar_old, reemplazar_new);
 imprimir("Reemplazo: " + reemplazo);
 
 # Dividir
-partes = "a,b,c".dividir(",");
+dividir_str = leer("Dividir str (a,b,c): ");
+dividir_sep = leer("Dividir sep (,): ");
+partes = dividir_str.dividir(dividir_sep);
 # imprimir("Dividido: " + partes); # Concatenar lista con string puede fallar si no hay toString implícito
 
 # 2. Archivo
 imprimir("\n2. Archivo");
 importar archivo;
 
-ruta = "prueba_fs.txt";
-contenido_escribir = "Este es un archivo de prueba.\nSegunda línea.";
+ruta = leer("Ruta archivo (prueba_fs.txt): ");
+contenido_escribir = leer("Contenido escribir: ");
 
 # Escribir
 imprimir("Escribiendo en '" + ruta + "'...");

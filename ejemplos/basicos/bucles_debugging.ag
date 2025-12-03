@@ -1,3 +1,4 @@
-para i = 1 hasta 10 {
+limite = leer("Limite: ")
+para i = 1 hasta limite {
     imprime(a"Contando: {i}")
 }

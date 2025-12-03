@@ -17,9 +17,10 @@ variados = a"{verdadero} {nulo}"
 si variados == "verdadero nulo" { imprimir("PASS: Variados") } sino { imprimir("FAIL: Variados") }
 
 # 5. Variables desde fuera
-x = 10;
-val_y = 20;
-nombre = "Águila";
+# 5. Variables desde fuera
+x = leer("x (10): ");
+val_y = leer("y (20): ");
+nombre = leer("Nombre (Águila): ");
 # Lista aun no tiene formato bonito en texto(), usa Debug
 lista = [x, val_y];
 

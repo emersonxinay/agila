@@ -5,12 +5,16 @@ imprimir("--- Iniciando Test de Colecciones ---");
 
 # 1. Listas
 imprimir("1. Listas");
-lista = [10, 20, 30];
+v1 = leer("Lista v1 (10): ");
+v2 = leer("Lista v2 (20): ");
+v3 = leer("Lista v3 (30): ");
+lista = [v1, v2, v3];
 imprimir(a"Lista inicial: {lista}");
 
 # Agregar
-lista.agregar(40);
-imprimir(a"Después de agregar 40: {lista}");
+v4 = leer("Agregar v4 (40): ");
+lista.agregar(v4);
+imprimir(a"Después de agregar {v4}: {lista}");
 
 # Longitud
 len = lista.longitud();
@@ -37,9 +41,11 @@ imprimir(a"Limpia: {lista}");
 
 # 2. Diccionarios
 imprimir("\n2. Diccionarios");
+nombre = leer("Dict nombre (Águila): ");
+version = leer("Dict version (1.0): ");
 dict = {
-    "nombre": "Águila",
-    "version": 1.0
+    "nombre": nombre,
+    "version": version
 };
 imprimir(a"Diccionario inicial: {dict}");
 
@@ -47,11 +53,13 @@ imprimir(a"Diccionario inicial: {dict}");
 imprimir(a"Nombre: {dict['nombre']}");
 
 # Asignación
-dict["autor"] = "Emerson";
+autor = leer("Dict autor (Emerson): ");
+dict["autor"] = autor;
 imprimir(a"Con autor: {dict}");
 
 # Modificación
-dict["version"] = 2.0;
+version_nueva = leer("Dict version nueva (2.0): ");
+dict["version"] = version_nueva;
 imprimir(a"Versión actualizada: {dict['version']}");
 
 # Nota: Métodos como claves() o valores() no están implementados aún en stdlib.

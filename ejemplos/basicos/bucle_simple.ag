@@ -1,5 +1,6 @@
-x = 0;
-mientras x < 5 {
+x = leer("Inicio: ");
+limite = leer("Limite: ");
+mientras x < limite {
     imprimir(x);
     x = x + 1;
 }

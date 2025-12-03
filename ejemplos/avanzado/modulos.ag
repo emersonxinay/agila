@@ -6,13 +6,15 @@ imprimir("--- Iniciando Test de Importación ---");
 # 1. Importar módulo completo
 importar modulo_prueba;
 
-imprimir(modulo_prueba.saludar("Visitante"));
+imprimir(modulo_prueba.saludar(leer("Nombre (Visitante): ")));
 imprimir("Variable exportada:");
 imprimir(modulo_prueba.variable_exportada);
 
 calc = modulo_prueba.Calculadora();
 imprimir("Suma desde clase importada:");
-imprimir(calc.sumar(10, 5));
+val_a = leer("Suma a (10): ");
+val_b = leer("Suma b (5): ");
+imprimir(calc.sumar(val_a, val_b));
 
 # 2. Importar selectivo (No soportado en MVP Bytecode aún)
 # desde modulo_prueba importar saludar;

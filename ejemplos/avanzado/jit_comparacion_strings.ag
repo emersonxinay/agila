@@ -1,7 +1,8 @@
 
 funcion test_jit() {
     imprimir("Iniciando prueba JIT...");
-    para i = 0 hasta 200 {
+    limite = leer("Limite loop (200): ");
+    para i = 0 hasta limite {
         si i == 150 {
             imprimir("Iteración JIT activa (probablemente)");
         }

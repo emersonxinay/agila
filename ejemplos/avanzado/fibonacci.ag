@@ -5,9 +5,10 @@ funcion fib(n) {
     retornar fib(n - 1) + fib(n - 2)
 }
 
-imprimir("Calculando Fibonacci de 40...")
+imprimir("Calculando Fibonacci de N...")
+n = leer("Ingrese N (40): ");
 inicio = reloj()
-resultado = fib(40)
+resultado = fib(n)
 fin = reloj()
 
 imprimir(a"Resultado: {resultado}")

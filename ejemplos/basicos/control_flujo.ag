@@ -4,7 +4,7 @@
 imprimir("--- Iniciando Test de Flujo ---");
 
 # 1. Condicional Si / Sino
-x = 10;
+x = leer("Ingrese x (10): ");
 si x > 5 {
     imprimir("x es mayor que 5 (Correcto)");
 } sino {
@@ -13,8 +13,9 @@ si x > 5 {
 
 # 2. Bucle Mientras
 contador = 0;
+limite_mientras = leer("Limite mientras (3): ");
 imprimir("Contando con mientras:");
-mientras contador < 3 {
+mientras contador < limite_mientras {
     imprimir(a"  Contador: {contador}");
     contador = contador + 1;
 }
@@ -27,14 +28,16 @@ para num en lista {
 }
 
 # 4. Bucle Para (Rango Clásico)
-imprimir("Bucle rango clásico (1 hasta 5):");
-para i = 1 hasta 5 {
+limite_para = leer("Limite para (5): ");
+imprimir("Bucle rango clásico (1 hasta {limite_para}):");
+para i = 1 hasta limite_para {
     imprimir(a"  i: {i}");
 }
 
 # 5. Romper y Continuar
 imprimir("Probando romper/continuar:");
-para i = 1 hasta 10 {
+limite_break = leer("Limite break (10): ");
+para i = 1 hasta limite_break {
     si i == 2 {
         # continuar; # No soportado en MVP
     }
