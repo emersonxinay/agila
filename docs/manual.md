@@ -60,12 +60,44 @@ usuario["edad"] = 31         # Modificación
 
 ## 🔄 3. Estructuras de Control
 
-### Condicionales
+### 3.1 Operadores Lógicos y Comparación (Nuevo en v2.6.6)
+Águila ofrece un conjunto completo de operadores en español para lógica booleana y comparaciones.
+
+| Operador | Descripción | Ejemplo |
+| :--- | :--- | :--- |
+| `y` | AND Lógico (Ambos deben ser verdaderos) | `si edad > 18 y tiene_licencia` |
+| `o` | OR Lógico (Al menos uno verdadero) | `si es_admin o es_moderador` |
+| `no` | NOT Lógico (Invierte el valor) | `si no esta_listo` |
+| `==` | Igualdad | `si x == 10` |
+| `!=` | Desigualdad (No igual) | `si x != 0` |
+| `>`, `<`, `>=`, `<=` | Comparaciones numéricas | `si nota >= 60` |
+
+#### Lógica "Truthy"
+En Águila, cualquier valor puede ser evaluado en una condición.
+*   **Falso:** `falso`, `nulo`.
+*   **Verdadero:** Todo lo demás (incluyendo `0`, `""`, `[]`).
+
 ```rust
-si edad >= 18 {
-    imprimir("Mayor de edad")
+nombre = "Emerson"
+si nombre {
+    imprimir("El nombre existe") # Se ejecuta porque "Emerson" es verdadero
+}
+```
+
+### 3.2 Condicionales (`si`, `sino si`, `sino`)
+Puedes encadenar múltiples condiciones de forma limpia.
+
+```rust
+nota = 85
+
+si nota >= 90 {
+    imprimir("Excelente")
+} sino si nota >= 70 {
+    imprimir("Aprobado")
+} sino si nota >= 50 {
+    imprimir("Recuperación")
 } sino {
-    imprimir("Menor de edad")
+    imprimir("Reprobado")
 }
 ```
 

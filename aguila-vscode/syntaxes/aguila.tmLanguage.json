@@ -15,6 +15,9 @@
             "include": "#strings"
         },
         {
+            "include": "#classes"
+        },
+        {
             "include": "#functions"
         },
         {
@@ -25,6 +28,12 @@
         },
         {
             "include": "#operators"
+        },
+        {
+            "include": "#variables"
+        },
+        {
+            "include": "#punctuation"
         }
     ],
     "repository": {
@@ -32,7 +41,11 @@
             "patterns": [
                 {
                     "name": "keyword.control.aguila",
-                    "match": "\\b(si|sino|mientras|para|en|funcion|retornar|romper|continuar|clase|nuevo|nulo|verdadero|falso|y|o|no|importar|desde|como|intentar|capturar|finalmente|lanzar|global|nolocal|pasar|eliminar|con|asincrono|esperar|ceder|segun|caso|defecto|imprime|imprimir|afirmar|let)\\b"
+                    "match": "\\b(si|sino|mientras|para|en|funcion|retornar|romper|continuar|clase|nuevo|intentar|capturar|finalmente|lanzar|global|nolocal|pasar|eliminar|con|asincrono|esperar|ceder|segun|caso|defecto|imprime|imprimir|afirmar|let|yo)\\b"
+                },
+                {
+                    "name": "keyword.control.import.aguila",
+                    "match": "\\b(importar|desde|como)\\b"
                 },
                 {
                     "name": "keyword.operator.logical.aguila",
@@ -44,7 +57,7 @@
                 },
                 {
                     "name": "variable.language.this.aguila",
-                    "match": "\\b(this)\\b"
+                    "match": "\\b(this|yo)\\b"
                 }
             ]
         },
@@ -97,19 +110,71 @@
                 }
             ]
         },
+        "classes": {
+            "patterns": [
+                {
+                    "match": "\\b(clase)\\s+([a-zA-Z_][a-zA-Z0-9_]*)",
+                    "captures": {
+                        "1": {
+                            "name": "keyword.control.class.aguila"
+                        },
+                        "2": {
+                            "name": "entity.name.type.class.aguila"
+                        }
+                    }
+                },
+                {
+                    "name": "entity.name.type.class.aguila",
+                    "match": "\\b[A-Z][a-zA-Z0-9_]*\\b"
+                }
+            ]
+        },
         "functions": {
             "patterns": [
                 {
                     "name": "support.function.builtin.aguila",
-                    "match": "\\b(leer|afirmar|conjunto)\\b"
+                    "match": "\\b(leer|afirmar|conjunto|imprime|imprimir|reloj)\\b"
                 },
                 {
-                    "name": "support.function.method.aguila",
-                    "match": "\\.(agregar|eliminar|insertar|longitud|contiene|ordenar|invertir|limpiar|copiar|unir|sublista|claves|valores|obtener|intersectar|diferencia|a_lista|mayusculas|minusculas|reemplazar|dividir|recortar|conectar|consulta|ejecutar|cerrar|parsear|stringificar|escribir|leer|sin|cos|tan|sqrt|aleatorio|suma|minimo|maximo|a_texto|redondear|piso|techo|abs)\\b"
+                    "match": "\\b(funcion)\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s*(\\()",
+                    "captures": {
+                        "1": {
+                            "name": "keyword.control.def.aguila"
+                        },
+                        "2": {
+                            "name": "entity.name.function.aguila"
+                        },
+                        "3": {
+                            "name": "punctuation.definition.parameters.begin.aguila"
+                        }
+                    }
                 },
                 {
-                    "name": "entity.name.function.aguila",
-                    "match": "\\b([a-zA-Z_][a-zA-Z0-9_]*)\\s*\\("
+                    "match": "\\b([a-zA-Z_][a-zA-Z0-9_]*)\\s*(\\()",
+                    "captures": {
+                        "1": {
+                            "name": "entity.name.function.call.aguila"
+                        },
+                        "2": {
+                            "name": "punctuation.definition.arguments.begin.aguila"
+                        }
+                    }
+                }
+            ]
+        },
+        "variables": {
+            "patterns": [
+                {
+                    "match": "\\.([a-zA-Z_][a-zA-Z0-9_]*)",
+                    "captures": {
+                        "1": {
+                            "name": "variable.other.property.aguila"
+                        }
+                    }
+                },
+                {
+                    "name": "variable.parameter.aguila",
+                    "match": "\\b([a-zA-Z_][a-zA-Z0-9_]*)(?=\\s*[:=])"
                 }
             ]
         },
@@ -138,6 +203,42 @@
                 {
                     "name": "keyword.operator.arrow.aguila",
                     "match": "(->)"
+                }
+            ]
+        },
+        "punctuation": {
+            "patterns": [
+                {
+                    "name": "punctuation.section.block.begin.aguila",
+                    "match": "\\{"
+                },
+                {
+                    "name": "punctuation.section.block.end.aguila",
+                    "match": "\\}"
+                },
+                {
+                    "name": "punctuation.section.parens.begin.aguila",
+                    "match": "\\("
+                },
+                {
+                    "name": "punctuation.section.parens.end.aguila",
+                    "match": "\\)"
+                },
+                {
+                    "name": "punctuation.section.brackets.begin.aguila",
+                    "match": "\\["
+                },
+                {
+                    "name": "punctuation.section.brackets.end.aguila",
+                    "match": "\\]"
+                },
+                {
+                    "name": "punctuation.separator.comma.aguila",
+                    "match": ","
+                },
+                {
+                    "name": "punctuation.terminator.statement.aguila",
+                    "match": ";"
                 }
             ]
         }

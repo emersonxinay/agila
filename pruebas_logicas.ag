@@ -1,0 +1,77 @@
+imprimir("--- Pruebas de Operadores Lógicos ---");
+
+# 1. Caso original del usuario (Enteros y Comparaciones)
+x = 15;
+imprimir("Probando x = 15 (debe ser > 10 y <= 20)");
+si x > 10 y x <= 20 {
+    imprimir("✅ Correcto: x está entre 10 y 20");
+} sino {
+    imprimir("❌ Error: Falló la lógica de rangos");
+}
+
+# 2. Booleanos puros
+imprimir("\nProbando booleanos puros (verdadero y falso)");
+si verdadero y falso {
+    imprimir("❌ Error: verdadero y falso no debería entrar aquí");
+} sino {
+    imprimir("✅ Correcto: verdadero y falso es falso");
+}
+
+si verdadero o falso {
+    imprimir("✅ Correcto: verdadero o falso es verdadero");
+} sino {
+    imprimir("❌ Error: Falló el O lógico");
+}
+
+# 3. Truthy (Texto)
+imprimir("\nProbando Truthy con texto ('hola' y 'mundo')");
+si "hola" y "mundo" {
+    imprimir("✅ Correcto: Textos no vacíos son verdaderos");
+} sino {
+    imprimir("❌ Error: Falló la lógica Truthy");
+}
+
+# 4. Mezcla (Entero y Booleano - Truthy)
+imprimir("\nProbando mezcla (1 y verdadero)");
+si 1 y verdadero {
+    imprimir("✅ Correcto: 1 es truthy");
+} sino {
+    imprimir("❌ Error: 1 debería ser truthy");
+}
+
+imprimir("\n--- Pruebas de != y no ---");
+
+# 5. Prueba de != (No Igual)
+x = 10;
+si x != 5 {
+    imprimir("✅ Correcto: 10 != 5");
+} sino {
+    imprimir("❌ Error: 10 debería ser distinto de 5");
+}
+
+si x != 10 {
+    imprimir("❌ Error: 10 no es distinto de 10");
+} sino {
+    imprimir("✅ Correcto: 10 es igual a 10 (else de !=)");
+}
+
+# 6. Prueba de no (Negación lógica)
+flag = falso;
+si no flag {
+    imprimir("✅ Correcto: no falso es verdadero");
+} sino {
+    imprimir("❌ Error: no falso falló");
+}
+
+si no verdadero {
+    imprimir("❌ Error: no verdadero es falso");
+} sino {
+    imprimir("✅ Correcto: no verdadero funcionó");
+}
+
+# 7. Prueba combinada
+si x > 5 y x != 20 {
+    imprimir("✅ Correcto: Combinación y con !=");
+} sino {
+    imprimir("❌ Error: Falló combinación");
+}

@@ -1,0 +1,3 @@
+# Identificar archivos .ag como Rust para que GitHub use el resaltado de sintaxis
+# y las estadísticas de lenguaje (ya que Águila aún no está en Linguist)
+*.ag linguist-language=Rust

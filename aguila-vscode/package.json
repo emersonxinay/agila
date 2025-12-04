@@ -74,6 +74,108 @@
                 "language": "aguila",
                 "path": "./snippets/aguila.json"
             }
-        ]
+        ],
+        "configurationDefaults": {
+            "[aguila]": {
+                "editor.semanticHighlighting.enabled": true
+            },
+            "editor.tokenColorCustomizations": {
+                "[Agulia]": {
+                    "textMateRules": [
+                        {
+                            "scope": "keyword.control.aguila",
+                            "settings": {
+                                "foreground": "#FF79C6",
+                                "fontStyle": "bold"
+                            }
+                        },
+                        {
+                            "scope": "keyword.operator.logical.aguila",
+                            "settings": {
+                                "foreground": "#FFB86C",
+                                "fontStyle": "italic"
+                            }
+                        },
+                        {
+                            "scope": "entity.name.function.aguila",
+                            "settings": {
+                                "foreground": "#50FA7B",
+                                "fontStyle": "bold"
+                            }
+                        },
+                        {
+                            "scope": "support.function.builtin.aguila",
+                            "settings": {
+                                "foreground": "#8BE9FD"
+                            }
+                        },
+                        {
+                            "scope": "string.quoted.double.aguila",
+                            "settings": {
+                                "foreground": "#F1FA8C"
+                            }
+                        },
+                        {
+                            "scope": "constant.numeric.aguila",
+                            "settings": {
+                                "foreground": "#BD93F9"
+                            }
+                        },
+                        {
+                            "scope": "storage.type.aguila",
+                            "settings": {
+                                "foreground": "#8BE9FD",
+                                "fontStyle": "italic"
+                            }
+                        },
+                        {
+                            "scope": "constant.language.aguila",
+                            "settings": {
+                                "foreground": "#FFB86C",
+                                "fontStyle": "bold"
+                            }
+                        },
+                        {
+                            "scope": "variable.parameter.aguila",
+                            "settings": {
+                                "foreground": "#FF79C6",
+                                "fontStyle": "italic"
+                            }
+                        },
+                        {
+                            "scope": "entity.name.type.class.aguila",
+                            "settings": {
+                                "foreground": "#8BE9FD",
+                                "fontStyle": "underline"
+                            }
+                        },
+                        {
+                            "scope": "keyword.control.import.aguila",
+                            "settings": {
+                                "foreground": "#BD93F9",
+                                "fontStyle": "italic"
+                            }
+                        },
+                        {
+                            "scope": "comment.line.number-sign.aguila",
+                            "settings": {
+                                "foreground": "#6272A4",
+                                "fontStyle": "italic"
+                            }
+                        },
+                        {
+                            "scope": [
+                                "punctuation.section.embedded.begin.aguila",
+                                "punctuation.section.embedded.end.aguila"
+                            ],
+                            "settings": {
+                                "foreground": "#FF5555",
+                                "fontStyle": "bold"
+                            }
+                        }
+                    ]
+                }
+            }
+        }
     }
 }
