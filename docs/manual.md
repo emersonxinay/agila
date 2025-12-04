@@ -1,4 +1,4 @@
-# 🦅 Documentación Oficial de Águila (v2.6.0)
+# 🦅 Documentación Oficial de Águila (v2.6.8)
 
 Bienvenido a la documentación oficial de **Águila**, un lenguaje de programación diseñado para la educación, con sintaxis en español y alto rendimiento.
 
@@ -10,7 +10,7 @@ Bienvenido a la documentación oficial de **Águila**, un lenguaje de programaci
 Ejecuta `aguila` en tu terminal para abrir la consola interactiva:
 ```bash
 $ aguila
-ÁGUILA v2.6.0
+ÁGUILA v2.6.8
 > imprimir("Hola Mundo")
 "Hola Mundo"
 ```
