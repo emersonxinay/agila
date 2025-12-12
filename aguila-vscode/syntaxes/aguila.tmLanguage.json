@@ -41,7 +41,7 @@
             "patterns": [
                 {
                     "name": "keyword.control.aguila",
-                    "match": "\\b(si|sino|mientras|para|en|funcion|retornar|romper|continuar|clase|nuevo|intentar|capturar|finalmente|lanzar|global|nolocal|pasar|eliminar|con|asincrono|esperar|ceder|segun|caso|defecto|imprime|imprimir|afirmar|let|yo)\\b"
+                    "match": "\\b(si|sino|mientras|para|en|funcion|fn|retornar|romper|continuar|clase|nuevo|intentar|capturar|finalmente|lanzar|global|nolocal|pasar|eliminar|con|asincrono|esperar|ceder|segun|caso|defecto|imprime|imprimir|afirmar|let|yo|hasta)\\b"
                 },
                 {
                     "name": "keyword.control.import.aguila",
@@ -53,11 +53,15 @@
                 },
                 {
                     "name": "constant.language.aguila",
-                    "match": "\\b(verdadero|falso|nulo)\\b"
+                    "match": "\\b(verdadero|falso|nulo|este)\\b"
                 },
                 {
                     "name": "variable.language.this.aguila",
-                    "match": "\\b(this|yo)\\b"
+                    "match": "\\b(this|yo|este)\\b"
+                },
+                {
+                    "name": "support.class.builtin.aguila",
+                    "match": "\\b(db|crypto|os|graficos|sistema|archivo|json|tiempo|matematicas)\\b"
                 }
             ]
         },
@@ -145,10 +149,10 @@
             "patterns": [
                 {
                     "name": "support.function.builtin.aguila",
-                    "match": "\\b(leer|afirmar|conjunto|imprime|imprimir|reloj)\\b"
+                    "match": "\\b(leer|afirmar|conjunto|imprime|imprimir|reloj|tipo|longitud)\\b"
                 },
                 {
-                    "match": "\\b(funcion)\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s*(\\()",
+                    "match": "\\b(funcion|fn)\\s+([a-zA-Z_][a-zA-Z0-9_]*)\\s*(\\()",
                     "captures": {
                         "1": {
                             "name": "keyword.control.def.aguila"
@@ -196,7 +200,7 @@
         },
         "types": {
             "name": "storage.type.aguila",
-            "match": "\\b(Numero|Texto|Logico|Lista|Diccionario|Conjunto)\\b"
+            "match": "\\b(Numero|Texto|Logico|Lista|Diccionario|Conjunto|Entero)\\b"
         },
         "operators": {
             "patterns": [

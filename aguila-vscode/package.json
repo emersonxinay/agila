@@ -2,7 +2,7 @@
     "name": "aguila-vscode",
     "displayName": "Lenguaje Águila",
     "description": "Soporte para el lenguaje de programación Aguila",
-    "version": "2.6.9",
+    "version": "2.7.2",
     "publisher": "aguila-lang",
     "author": {
         "name": "Emerson Espinoza",
@@ -101,6 +101,13 @@
                             "settings": {
                                 "foreground": "#50FA7B",
                                 "fontStyle": "bold"
+                            }
+                        },
+                        {
+                            "scope": "support.class.builtin.aguila",
+                            "settings": {
+                                "foreground": "#8BE9FD",
+                                "fontStyle": "italic"
                             }
                         },
                         {
