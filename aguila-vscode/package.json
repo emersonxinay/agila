@@ -2,7 +2,7 @@
     "name": "aguila-vscode",
     "displayName": "Lenguaje Águila",
     "description": "Soporte para el lenguaje de programación Aguila",
-    "version": "2.7.2",
+    "version": "2.7.5",
     "publisher": "aguila-lang",
     "author": {
         "name": "Emerson Espinoza",
@@ -32,17 +32,17 @@
         "test": "node ./out/test/runTest.js"
     },
     "devDependencies": {
-        "@types/vscode": "^1.70.0",
         "@types/glob": "^7.2.0",
         "@types/mocha": "^9.1.1",
         "@types/node": "16.x",
+        "@types/vscode": "^1.70.0",
         "@typescript-eslint/eslint-plugin": "^5.31.0",
         "@typescript-eslint/parser": "^5.31.0",
+        "@vscode/test-electron": "^2.1.5",
         "eslint": "^8.20.0",
         "glob": "^8.0.3",
         "mocha": "^10.0.0",
-        "typescript": "^4.7.4",
-        "@vscode/test-electron": "^2.1.5"
+        "typescript": "^4.7.4"
     },
     "contributes": {
         "languages": [
@@ -75,6 +75,32 @@
                 "path": "./snippets/aguila.json"
             }
         ],
+        "configuration": {
+            "type": "object",
+            "title": "Configuración de Águila",
+            "properties": {
+                "aguila.enableLSP": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Habilitar el servidor de lenguaje (LSP) para diagnósticos en tiempo real."
+                },
+                "aguila.serverPath": {
+                    "type": "string",
+                    "default": null,
+                    "description": "Ruta personalizada al ejecutable 'aguila'. Si se deja vacío, se intentará usar el del PATH o el instalado por la extensión."
+                },
+                "aguila.trace.server": {
+                    "type": "string",
+                    "enum": [
+                        "off",
+                        "messages",
+                        "verbose"
+                    ],
+                    "default": "off",
+                    "description": "Nivel de trazas para la comunicación con el servidor LSP."
+                }
+            }
+        },
         "configurationDefaults": {
             "[aguila]": {
                 "editor.semanticHighlighting.enabled": true
@@ -198,5 +224,9 @@
                 }
             }
         }
+    },
+    "dependencies": {
+        "aguila-lang": "^2.6.3",
+        "vscode-languageclient": "^9.0.1"
     }
 }

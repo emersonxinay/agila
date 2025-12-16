@@ -1,94 +1,172 @@
+
 import * as vscode from 'vscode';
 import * as https from 'https';
 import * as fs from 'fs';
 import * as path from 'path';
 import { execSync } from 'child_process';
+import {
+    LanguageClient,
+    LanguageClientOptions,
+    ServerOptions,
+    Executable
+} from 'vscode-languageclient/node';
 
-export function activate(context: vscode.ExtensionContext) {
-    console.log('Águila extension is now active!');
+let client: LanguageClient;
 
-    // Verificar si Águila está instalado
-    if (!isAguilaInstalled()) {
-        vscode.window.showInformationMessage(
-            'Águila no está instalado. ¿Deseas instalarlo automáticamente?',
-            'Sí, instalar', 'No'
-        ).then(selection => {
-            if (selection === 'Sí, instalar') {
-                installAguila(context);
-            }
-        });
+export async function activate(context: vscode.ExtensionContext) {
+    console.log('Águila extension is activating...');
+
+    // 1. Verificación e Instalación
+    const binaryPath = await ensureAguilaInstalled(context);
+
+    if (!binaryPath) {
+        console.log('Águila binary not available. Extension features limited.');
+        return;
+    }
+
+    // 2. Iniciar LSP (si está habilitado)
+    const config = vscode.workspace.getConfiguration('aguila');
+    if (config.get<boolean>('enableLSP')) {
+        await startLanguageServer(context, binaryPath);
     }
 }
 
-export function deactivate() { }
+export function deactivate(): Thenable<void> | undefined {
+    if (!client) {
+        return undefined;
+    }
+    return client.stop();
+}
 
-function isAguilaInstalled(): boolean {
+async function startLanguageServer(context: vscode.ExtensionContext, command: string) {
+    // Configuración del Servidor
+    const serverOptions: ServerOptions = {
+        run: { command: command, args: ["lsp"] },
+        debug: { command: command, args: ["lsp"] } // Podríamos añadir flags de debug si fuese necesario
+    };
+
+    // Configuración del Cliente
+    const clientOptions: LanguageClientOptions = {
+        documentSelector: [{ scheme: 'file', language: 'aguila' }],
+        synchronize: {
+            fileEvents: vscode.workspace.createFileSystemWatcher('**/.clientrc')
+        }
+    };
+
+    // Crear y arrancar cliente
+    client = new LanguageClient(
+        'aguilaLanguageServer',
+        'Servidor de Lenguaje Águila',
+        serverOptions,
+        clientOptions
+    );
+
+    // Iniciar
+    console.log(`Starting LSP with command: ${command} lsp`);
+    await client.start();
+
+    // Mostrar status item
+    const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+    statusBarItem.text = "$(check) Águila LSP";
+    statusBarItem.tooltip = "Servidor de lenguaje Águila activo";
+    statusBarItem.show();
+    context.subscriptions.push(statusBarItem);
+}
+
+// --- Lógica de Instalación (Refactorizada y Mejorada) ---
+
+async function ensureAguilaInstalled(context: vscode.ExtensionContext): Promise<string | null> {
+    const config = vscode.workspace.getConfiguration('aguila');
+    let customPath = config.get<string>('serverPath');
+
+    // 1. Si el usuario definió un path, usar ese.
+    if (customPath && customPath.trim() !== "") {
+        if (fs.existsSync(customPath)) return customPath;
+        vscode.window.showErrorMessage(`Ruta de Águila configurada no válida: ${customPath}`);
+        return null; // O fallback? Mejor fallar explícitamente si el usuario lo configuró.
+    }
+
+    // 2. Intentar usar binary del sistema (PATH)
+    if (isAguilaAvailable('aguila')) {
+        return 'aguila';
+    }
+
+    // 3. Revisar instalación local de la extensión (bin folder)
+    const binDir = path.join(context.globalStorageUri.fsPath, 'bin');
+    const platformBin = process.platform === 'win32' ? 'aguila.exe' : 'aguila';
+    const localBinPath = path.join(binDir, platformBin);
+
+    if (fs.existsSync(localBinPath)) {
+        // Asegurar permisos
+        if (process.platform !== 'win32') {
+            try { fs.chmodSync(localBinPath, '755'); } catch { }
+        }
+        return localBinPath;
+    }
+
+    // 4. No encontrado. Preguntar si instalar.
+    const selection = await vscode.window.showInformationMessage(
+        'El compilador de Águila no se encontró. ¿Deseas instalarlo automáticamente para habilitar autocompletado y errores?',
+        'Sí, instalar', 'No'
+    );
+
+    if (selection === 'Sí, instalar') {
+        return await installAguila(context, binDir, platformBin);
+    }
+
+    return null;
+}
+
+function isAguilaAvailable(cmd: string): boolean {
     try {
-        execSync('aguila --version', { stdio: 'ignore' });
+        execSync(`${cmd} --version`, { stdio: 'ignore' });
         return true;
     } catch {
         return false;
     }
 }
 
-async function installAguila(context: vscode.ExtensionContext) {
+async function installAguila(context: vscode.ExtensionContext, binDir: string, binaryName: string): Promise<string | null> {
     const platform = process.platform;
-    const arch = process.arch;
-
-    // URL del binario según plataforma (v2.3.0)
     let downloadUrl = '';
-    let binaryName = 'aguila';
+
+    // HARDCODED VERSION por ahora (Idealmente buscar latest de GitHub API)
+    const AGUILA_VERSION = 'v2.7.5'; // Versión a descargar
+    const BASE_URL = `https://github.com/emersonxinay/aguila/releases/download/${AGUILA_VERSION}`;
 
     if (platform === 'darwin') {
-        if (arch === 'arm64') {
-            downloadUrl = 'https://github.com/emersonxinay/aguila/releases/download/v2.3.0/aguila-macos';
-        } else {
-            downloadUrl = 'https://github.com/emersonxinay/aguila/releases/download/v2.3.0/aguila-macos'; // Fallback to same binary or x64 if available
-        }
+        downloadUrl = `${BASE_URL}/aguila-macos`;
     } else if (platform === 'linux') {
-        downloadUrl = 'https://github.com/emersonxinay/aguila/releases/download/v2.3.0/aguila-linux';
+        downloadUrl = `${BASE_URL}/aguila-linux`;
     } else if (platform === 'win32') {
-        downloadUrl = 'https://github.com/emersonxinay/aguila/releases/download/v2.3.0/aguila-windows.exe';
-        binaryName = 'aguila.exe';
+        downloadUrl = `${BASE_URL}/aguila-windows.exe`;
     } else {
-        vscode.window.showErrorMessage(`Plataforma no soportada automáticamente: ${platform}-${arch}`);
-        return;
+        vscode.window.showErrorMessage(`Plataforma ${platform} no soportada para instalación auto.`);
+        return null;
     }
 
-    vscode.window.withProgress({
+    return await vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
-        title: "Instalando Águila...",
+        title: `Instalando Águila ${VERSION}...`,
         cancellable: false
     }, async (progress) => {
         try {
-            // Crear carpeta bin si no existe
-            const binDir = path.join(context.globalStorageUri.fsPath, 'bin');
             if (!fs.existsSync(binDir)) {
                 fs.mkdirSync(binDir, { recursive: true });
             }
-
-            const binPath = path.join(binDir, binaryName);
+            const destPath = path.join(binDir, binaryName);
 
             progress.report({ message: "Descargando..." });
-            await downloadFile(downloadUrl, binPath);
+            await downloadFile(downloadUrl, destPath);
 
-            // Dar permisos de ejecución (macOS/Linux)
             if (platform !== 'win32') {
-                progress.report({ message: "Configurando permisos..." });
-                fs.chmodSync(binPath, '755');
+                fs.chmodSync(destPath, '755');
             }
-
-            // Agregar al PATH (esto es complejo de hacer persistentemente desde la extensión, 
-            // así que mejor configuramos la extensión para usar este path o instruimos al usuario)
-
-            // Opción A: Configurar la extensión para usar este ejecutable
-            const config = vscode.workspace.getConfiguration('aguila');
-            await config.update('executablePath', binPath, vscode.ConfigurationTarget.Global);
-
-            vscode.window.showInformationMessage(`¡Águila instalado correctamente en ${binPath}! Se ha configurado la extensión para usarlo.`);
-
+            vscode.window.showInformationMessage(`Águila ${AGUILA_VERSION} descargado y configurado correctamente.`);
+            return destPath;
         } catch (error) {
             vscode.window.showErrorMessage(`Error instalando Águila: ${error}`);
+            return null;
         }
     });
 }
@@ -96,9 +174,15 @@ async function installAguila(context: vscode.ExtensionContext) {
 function downloadFile(url: string, dest: string): Promise<void> {
     return new Promise((resolve, reject) => {
         const file = fs.createWriteStream(dest);
-        https.get(url, (response) => {
+        const request = https.get(url, (response) => {
+            if (response.statusCode === 302 || response.statusCode === 301) {
+                // Handle redirect
+                downloadFile(response.headers.location!, dest).then(resolve).catch(reject);
+                return;
+            }
+
             if (response.statusCode !== 200) {
-                reject(new Error(`Falló la descarga: ${response.statusCode}`));
+                reject(new Error(`Falló la descarga: ${response.statusCode} ${response.statusMessage}`));
                 return;
             }
             response.pipe(file);
@@ -106,7 +190,8 @@ function downloadFile(url: string, dest: string): Promise<void> {
                 file.close();
                 resolve();
             });
-        }).on('error', (err) => {
+        });
+        request.on('error', (err) => {
             fs.unlink(dest, () => { });
             reject(err);
         });

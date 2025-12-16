@@ -1,202 +1,244 @@
-# 🦅 Documentación Oficial de Águila (v2.6.8)
+# 🦅 Manual de Referencia: Lenguaje Águila (v2.7.5)
 
-Bienvenido a la documentación oficial de **Águila**, un lenguaje de programación diseñado para la educación, con sintaxis en español y alto rendimiento.
-
----
-
-## 🚀 1. Instalación y Uso
-
-### REPL (Consola Interactiva)
-Ejecuta `aguila` en tu terminal para abrir la consola interactiva:
-```bash
-$ aguila
-ÁGUILA v2.6.8
-> imprimir("Hola Mundo")
-"Hola Mundo"
-```
-
-### Ejecutar Archivos
-Guarda tu código con extensión `.ag` y ejecútalo:
-```bash
-aguila mi_programa.ag
-```
+Documentación completa del lenguaje de programación Águila.
 
 ---
 
-## 📝 2. Sintaxis Básica
+## 📑 Índice
+1. [Introducción](#introducción)
+2. [Sintaxis Básica](#sintaxis-básica)
+   - [Variables y Constantes](#variables-y-constantes)
+   - [Tipos de Datos](#tipos-de-datos)
+3. [Operadores](#operadores)
+4. [Estructuras de Control](#estructuras-de-control)
+5. [Funciones](#funciones)
+6. [Programación Orientada a Objetos](#programación-orientada-a-objetos)
+7. [Módulos e Importaciones](#módulos-e-importaciones)
+8. [Concurrencia](#concurrencia)
+9. [Manejo de Errores](#manejo-de-errores)
 
-Águila utiliza una sintaxis híbrida: palabras clave en español (inspiración Python) y bloques delimitados por llaves `{}` (estilo C/Rust).
+---
 
-### Variables
-```rust
-nombre = "Águila"
-version = 2.6
-es_rapido = verdadero
+## 1. Introducción
+
+Águila es un lenguaje dinámico, interpretado (con JIT) y escrito en español. Su diseño prioriza la legibilidad y la simplicidad, inspirado en Python pero con bloques estilo C/Rust.
+
+---
+
+## 2. Sintaxis Básica
+
+### Comentarios
+```aguila
+# Esto es un comentario de una línea
 ```
+
+### Variables y Constantes
+Se recomienda usar `let` para declarar variables nuevas.
+
+```aguila
+let nombre = "Águila"
+let version = 2.75
+let activo = verdadero
+```
+
+> **Nota:** Aunque Águila soporta asignación directa (`x = 10`), el uso de `let` ayuda a evitar la creación accidental de variables globales y es necesario para variables locales en funciones.
 
 ### Tipos de Datos
-*   **Numero**: `10`, `3.14`, `-5`
-*   **Texto**: `"Hola"`, `'Mundo'`, `a"Hola {nombre}"`
-*   **Logico**: `verdadero`, `falso`
-*   **Nulo**: `nulo`
 
-### Listas
-Colecciones ordenadas de elementos.
-```rust
-numeros = [1, 2, 3]
-imprimir(numeros[0])  # Acceso: 1
-numeros[1] = 99       # Modificación
-```
+| Tipo | Ejemplo | Descripción |
+| :--- | :--- | :--- |
+| **Entero** | `42`, `-5` | Números enteros (32-bit/64-bit según contexto). |
+| **Decimal** | `3.14`, `0.5` | Números de punto flotante (64-bit). |
+| **Texto** | `"Hola"`, `'Mundo'` | Cadenas UTF-8 inmutables. |
+| **Logico** | `verdadero`, `falso` | Valores booleanos. |
+| **Nulo** | `nulo` | Ausencia de valor. |
+| **Lista** | `[1, 2, "a"]` | Array ordenado y mutable. |
+| **Diccionario** | `{"a": 1}` | Mapa clave-valor (Hash Map). |
+| **Rango** | `0 hasta 10` | Generador de secuencia numéricas. |
 
-### Diccionarios
-Colecciones de pares clave-valor.
-```rust
-usuario = {"nombre": "Juan", "edad": 30}
-imprimir(usuario["nombre"])  # Acceso: Juan
-usuario["edad"] = 31         # Modificación
+#### Interpolación de Texto
+Usa el prefijo `a` antes de las comillas:
+```aguila
+let user = "Dev"
+imprimir(a"Hola, {user}!") 
 ```
 
 ---
 
-## 🔄 3. Estructuras de Control
+## 3. Operadores
 
-### 3.1 Operadores Lógicos y Comparación (Nuevo en v2.6.6)
-Águila ofrece un conjunto completo de operadores en español para lógica booleana y comparaciones.
+### Aritméticos
+`+`, `-`, `*`, `/` (división decimal), `//` (división entera), `%` (módulo), `**` (potencia).
 
-| Operador | Descripción | Ejemplo |
-| :--- | :--- | :--- |
-| `y` | AND Lógico (Ambos deben ser verdaderos) | `si edad > 18 y tiene_licencia` |
-| `o` | OR Lógico (Al menos uno verdadero) | `si es_admin o es_moderador` |
-| `no` | NOT Lógico (Invierte el valor) | `si no esta_listo` |
-| `==` | Igualdad | `si x == 10` |
-| `!=` | Desigualdad (No igual) | `si x != 0` |
-| `>`, `<`, `>=`, `<=` | Comparaciones numéricas | `si nota >= 60` |
+### Comparación
+`==`, `!=`, `<`, `>`, `<=`, `>=`.
 
-#### Lógica "Truthy"
-En Águila, cualquier valor puede ser evaluado en una condición.
-*   **Falso:** `falso`, `nulo`.
-*   **Verdadero:** Todo lo demás (incluyendo `0`, `""`, `[]`).
+### Lógicos
+*   `y` (AND)
+*   `o` (OR)
+*   `no` (NOT)
 
-```rust
-nombre = "Emerson"
-si nombre {
-    imprimir("El nombre existe") # Se ejecuta porque "Emerson" es verdadero
-}
-```
+---
 
-### 3.2 Condicionales (`si`, `sino si`, `sino`)
-Puedes encadenar múltiples condiciones de forma limpia.
+## 4. Estructuras de Control
 
-```rust
-nota = 85
-
-si nota >= 90 {
-    imprimir("Excelente")
-} sino si nota >= 70 {
-    imprimir("Aprobado")
-} sino si nota >= 50 {
-    imprimir("Recuperación")
+### Condicionales (`si` / `sino`)
+```aguila
+si edad >= 18 {
+    imprimir("Mayor de edad")
+} sino si edad > 13 {
+    imprimir("Adolescente")
 } sino {
-    imprimir("Reprobado")
+    imprimir("Niño")
 }
 ```
 
-### Bucles
-```rust
-# Bucle Mientras
-contador = 0
-mientras contador < 5 {
-    imprimir(contador)
-    contador = contador + 1
+### Bucle `mientras`
+```aguila
+let i = 0
+mientras i < 5 {
+    imprimir(i)
+    i = i + 1
 }
+```
 
-# Bucle Para (Rangos)
-para i = 0 hasta 5 {
+### Bucle `para`
+Ideal para recorrer listas, diccionarios o rangos.
+
+```aguila
+# Recorrer rango
+para i = 1 hasta 10 {
     imprimir(i)
 }
+
+# Recorrer lista
+let frutas = ["Manzana", "Pera"]
+para fruta en frutas {
+    imprimir(fruta)
+}
 ```
+
+Palabras clave de control:
+*   `romper`: Termina el bucle inmediatamente.
+*   `continuar`: Salta a la siguiente iteración.
 
 ---
 
-## 📦 4. Funciones
+## 5. Funciones
 
-```rust
+Las funciones son ciudadanos de primera clase.
+
+```aguila
 funcion sumar(a, b) {
     retornar a + b
 }
 
-resultado = sumar(5, 10)
-imprimir(resultado)
+# Funciones flecha / anónimas
+let duplicar = fn(x) -> x * 2
+```
+
+### Recursión
+Águila optimiza la recursión directa mediante JIT.
+
+```aguila
+funcion fib(n) {
+    si n < 2 { retornar n }
+    retornar fib(n-1) + fib(n-2)
+}
 ```
 
 ---
 
-## ⚡ 5. Asincronía (Nuevo en v2.6.0)
+## 6. Programación Orientada a Objetos
 
-Águila soporta programación asíncrona básica con `asincrono` y `esperar`.
+Águila usa un modelo de clases clásico.
 
-```rust
-funcion asincrona tarea_lenta() {
-    # ... lógica asíncrona ...
+```aguila
+clase Animal {
+    funcion init(nombre) {
+        yo.nombre = nombre  # 'yo' equivale a 'self' o 'this'
+    }
+
+    funcion hablar() {
+        imprimir("...")
+    }
+}
+
+clase Perro : Animal {     # Herencia con ':'
+    funcion hablar() {
+        imprimir("Guau!")
+    }
+}
+
+let firulais = nuevo Perro("Firulais")
+firulais.hablar()
+```
+
+---
+
+## 7. Módulos e Importaciones
+
+### Módulos Estándar
+```aguila
+usar "mate"
+usar "tiempo"
+usar "json"
+```
+
+### Módulos Locales
+Puedes importar otros archivos `.ag`.
+```aguila
+importar "mi_modulo" desde "./libs"
+```
+
+---
+
+## 8. Concurrencia
+
+### Hilos
+```aguila
+usar "thread"
+
+funcion tarea() {
+    imprimir("Ejecutando en hilo")
+}
+
+let t = thread.crear(tarea)
+t.unir()
+```
+
+### Asincronía (Async/Await)
+```aguila
+funcion asincrona obtener_datos() {
+    # simular espera...
     retornar "Datos"
 }
 
 funcion asincrona main() {
-    resultado = esperar tarea_lenta()
-    imprimir(resultado)
+    let d = esperar obtener_datos()
 }
 ```
 
 ---
 
-## ⚠️ 6. Manejo de Errores
+## 9. Manejo de Errores
 
-```rust
+```aguila
 intentar {
-    lanzar "Algo salió mal"
+    let x = 10 / 0
 } capturar error {
-    imprimir("Error capturado: " + error)
+    imprimir(a"Ocurrió un error: {error}")
 } finalmente {
-    imprimir("Esto siempre se ejecuta")
+    imprimir("Limpieza...")
 }
 ```
 
 ---
 
-## 🏛️ 7. Clases y Objetos
-
-```rust
-clase Persona {
-    funcion init(nombre) {
-        yo.nombre = nombre
-    }
-
-    funcion saludar() {
-        imprimir("Hola, soy " + yo.nombre)
-    }
-}
-
-p = Persona("Maria")
-p.saludar()
-```
+### Palabras Reservadas (Referencia Rápida)
+`si`, `sino`, `mientras`, `para`, `romper`, `continuar`, `funcion`, `retornar`, `clase`, `nuevo`, `importar`, `desde`, `verdadero`, `falso`, `nulo`, `yo`, `super`, `intentar`, `capturar`, `finalmente`, `lanzar`, `asincrono`, `esperar`.
 
 ---
-
-## 📚 8. Biblioteca Estándar
-
-### Funciones Globales
-*   **`imprime(valor)`**: Muestra valor en consola (alias: `imprimir`).
-*   **`leer(mensaje)`**: Lee entrada del usuario.
-*   **`afirmar(condicion, msg)`**: Lanza error si la condición es falsa.
-*   **`reloj()`**: Devuelve tiempo actual en segundos.
-
-### Módulos (Experimental)
-*   **`net`**: Funciones de red (TCP).
-*   **`mate`**: Funciones matemáticas.
-*   **`lista`**: Utilidades para listas.
-
----
-
 <div align="center">
-Hecho con ❤️ por Emerson Espinoza
+Águila v2.7.5 • <a href="https://aguila-lang.org">Simplicidad y Potencia</a>
 </div>
