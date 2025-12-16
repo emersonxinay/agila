@@ -131,7 +131,7 @@ async function installAguila(context: vscode.ExtensionContext, binDir: string, b
     let downloadUrl = '';
 
     // HARDCODED VERSION por ahora (Idealmente buscar latest de GitHub API)
-    const AGUILA_VERSION = 'v2.7.5'; // Versión a descargar
+    const AGUILA_VERSION = 'v2.7.6'; // Versión a descargar
     const BASE_URL = `https://github.com/emersonxinay/aguila/releases/download/${AGUILA_VERSION}`;
 
     if (platform === 'darwin') {
@@ -147,7 +147,7 @@ async function installAguila(context: vscode.ExtensionContext, binDir: string, b
 
     return await vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
-        title: `Instalando Águila ${VERSION}...`,
+        title: `Instalando Águila ${AGUILA_VERSION}...`,
         cancellable: false
     }, async (progress) => {
         try {

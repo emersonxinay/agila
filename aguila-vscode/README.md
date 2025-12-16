@@ -9,7 +9,7 @@ Soporte oficial de VS Code para el lenguaje de programación **ÁGUILA**, un len
 - 📁 **Icono personalizado** para archivos ÁGUILA
 - 🔄 **Auto-cierre** de paréntesis, llaves y corchetes
 - 💬 **Comentarios** con `#`
-- 🌈 **Soporte para interpolación de strings** con `f"..."`
+- 🌈 **Soporte para interpolación de strings** con `a"..."`
 
 ## 📦 Instalación
 
